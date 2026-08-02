@@ -90,9 +90,7 @@ function emitDeepLinks(urls: string[]) {
     }
     void atlasAuth.handleCallback(url).catch((error) => {
       logger?.error("AtlasFlux authentication callback failed", error)
-      void atlasAuth?.status().then((status) => {
-        for (const win of BrowserWindow.getAllWindows()) win.webContents.send("atlas-auth-state", status)
-      })
+      atlasAuth?.reportError(error)
     })
   }
   pendingDeepLinks.push(...passthrough)

@@ -109,6 +109,17 @@ export class AtlasAuthController {
     return () => this.listeners.delete(listener)
   }
 
+  reportError(error: unknown) {
+    const status: AtlasAuthStatus = {
+      authenticated: false,
+      online: false,
+      parentOrigin: this.parentOrigin,
+      error: error instanceof Error ? error.message : "AtlasFlux authentication failed",
+    }
+    this.emit(status)
+    return status
+  }
+
   isCallback(value: string) {
     try {
       const url = new URL(value)
