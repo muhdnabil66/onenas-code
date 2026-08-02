@@ -6,7 +6,7 @@ import { homedir, tmpdir } from "node:os"
 import { join } from "node:path"
 import { getCACertificates, setDefaultCACertificates } from "node:tls"
 import type { Event } from "electron"
-import { app } from "electron"
+import { app, BrowserWindow } from "electron"
 
 import { Deferred, Effect, Fiber } from "effect"
 import contextMenu from "electron-context-menu"
@@ -48,16 +48,18 @@ import { spawnWslSidecar } from "./wsl/sidecar"
 import { migrate } from "./migrate"
 import { cleanupStoreFiles } from "./store-cleanup"
 import { startBackgroundCli } from "./background-cli"
+import { AtlasAuthController } from "./atlas-auth"
+import { managedProviderConfig, startAtlasProviderBridge } from "./atlas-provider-bridge"
 
 const APP_NAMES: Record<string, string> = {
-  dev: "OpenCode Dev",
-  beta: "OpenCode Beta",
-  prod: "OpenCode",
+  dev: "ONeNas Code Dev",
+  beta: "ONeNas Code Beta",
+  prod: "ONeNas Code",
 }
 const APP_IDS: Record<string, string> = {
-  dev: "ai.opencode.desktop.dev",
-  beta: "ai.opencode.desktop.beta",
-  prod: "ai.opencode.desktop",
+  dev: "my.onenas.code.dev",
+  beta: "my.onenas.code.beta",
+  prod: "my.onenas.code",
 }
 const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
 const SIDECAR_VERSION = process.env.OPENCODE_SIDECAR_V2 === "1" ? "v2" : "v1"
@@ -65,6 +67,7 @@ const jsCallStackFeature = "DocumentPolicyIncludeJSCallStacksInCrashReports"
 
 let logger: ReturnType<typeof initLogging>
 let server: SidecarListener | null = null
+let atlasAuth: AtlasAuthController | null = null
 
 const pendingDeepLinks: string[] = []
 
@@ -79,9 +82,22 @@ function useEnvProxy() {
 
 function emitDeepLinks(urls: string[]) {
   if (urls.length === 0) return
-  pendingDeepLinks.push(...urls)
+  const passthrough: string[] = []
+  for (const url of urls) {
+    if (!atlasAuth?.isCallback(url)) {
+      passthrough.push(url)
+      continue
+    }
+    void atlasAuth.handleCallback(url).catch((error) => {
+      logger?.error("AtlasFlux authentication callback failed", error)
+      void atlasAuth?.status().then((status) => {
+        for (const win of BrowserWindow.getAllWindows()) win.webContents.send("atlas-auth-state", status)
+      })
+    })
+  }
+  pendingDeepLinks.push(...passthrough)
   const win = getLastFocusedWindow()
-  if (win) sendDeepLinks(win, urls)
+  if (win && passthrough.length) sendDeepLinks(win, passthrough)
 }
 
 async function killSidecar() {
@@ -121,7 +137,7 @@ const main = Effect.gen(function* () {
 
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
-  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "my.onenas.code.dev"
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
 
@@ -137,7 +153,7 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
+  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "ONeNas Code Dev")
   app.setAppUserModelId(appId)
   app.setPath(
     "userData",
@@ -202,7 +218,7 @@ const main = Effect.gen(function* () {
   const shellEnv = preferAppEnv(app.getPath("userData"))
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
-    const urls = argv.filter((arg: string) => arg.startsWith("opencode://"))
+    const urls = argv.filter((arg: string) => arg.startsWith("onenas-code://"))
     if (urls.length) {
       logger.log("deep link received via second-instance", { urls })
       emitDeepLinks(urls)
@@ -253,6 +269,15 @@ const main = Effect.gen(function* () {
 
   yield* Effect.promise(() => app.whenReady())
 
+  atlasAuth = new AtlasAuthController()
+  atlasAuth.subscribe((status) => {
+    for (const win of BrowserWindow.getAllWindows()) win.webContents.send("atlas-auth-state", status)
+  })
+  const providerBridge = yield* Effect.promise(() => startAtlasProviderBridge(atlasAuth!))
+  const bootstrap = yield* Effect.promise(() => atlasAuth!.bootstrap().catch(() => atlasAuth!.cachedBootstrap()))
+  process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(managedProviderConfig(providerBridge.url, bootstrap))
+  app.once("will-quit", () => void providerBridge.stop())
+
   if (!TEST_ONBOARDING) migrate()
   yield* Effect.promise(() => cleanupStoreFiles(app.getPath("userData"))).pipe(
     Effect.tap((result) =>
@@ -267,7 +292,7 @@ const main = Effect.gen(function* () {
       }),
     ),
   )
-  app.setAsDefaultProtocolClient("opencode")
+  app.setAsDefaultProtocolClient("onenas-code")
   registerRendererProtocol()
   setDockIcon()
   const updater = setupAutoUpdater(stopSidecars)
@@ -298,6 +323,12 @@ const main = Effect.gen(function* () {
     setBackgroundColor: (color) => setBackgroundColor(color),
     exportDebugLogs: () => exportDebugLogs(),
     recordFatalRendererError: (error) => writeLog("renderer", "fatal renderer error", { ...error }, "error"),
+    atlasAuth: {
+      status: () => atlasAuth!.status(),
+      signIn: () => atlasAuth!.startLogin(),
+      signOut: () => atlasAuth!.signOut(),
+      bootstrap: (force) => atlasAuth!.bootstrap(force),
+    },
   })
   registerWslIpcHandlers(wslServers)
   void updater.start()

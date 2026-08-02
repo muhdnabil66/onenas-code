@@ -61,6 +61,19 @@ export const DialogConnectProvider: Component<{
   const language = useLanguage()
   const settings = useSettings()
   const newLayout = settings.general.newLayoutDesigns
+  if ((globalThis as typeof globalThis & { __ONENAS_MANAGED__?: boolean }).__ONENAS_MANAGED__) {
+    return (
+      <Dialog title="AtlasFlux AI">
+        <div class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+          <div class="text-16-medium text-text-strong">Signed in with AtlasFlux AI</div>
+          <div class="max-w-sm text-14-regular text-text-weak">
+            Providers, model access and API credentials are managed by ai.atlasflux.my. ONeNas Code does not accept
+            provider API keys.
+          </div>
+        </div>
+      </Dialog>
+    )
+  }
   const reset = controller.back
   const back = { current: reset }
   let focusHost: HTMLDivElement | undefined

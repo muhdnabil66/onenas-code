@@ -41,6 +41,31 @@ export type FatalRendererError = {
   os?: string
 }
 
+export type AtlasAuthStatus = {
+  authenticated: boolean
+  online: boolean
+  profile?: { id: string; name?: string; email?: string }
+  parentOrigin: string
+  error?: string
+}
+
+export type AtlasBootstrap = {
+  user: { id: string; name?: string; email?: string }
+  plan: { id: string; name: string }
+  credits: { balance: number; currency: "credits" }
+  models: {
+    id: string
+    name: string
+    contextWindow?: number
+    maxOutputTokens?: number
+    supportsReasoning?: boolean
+    supportsTools?: boolean
+  }[]
+  features: Record<string, boolean>
+  relay: { url: string; token?: string; expiresAt?: string }
+  minimumVersion: string
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -106,4 +131,11 @@ export type ElectronAPI = {
   exportDebugLogs: () => Promise<string>
   setForceFocus: (enabled: boolean) => Promise<void>
   recordFatalRendererError: (error: FatalRendererError) => Promise<void>
+  atlasAuth: {
+    status: () => Promise<AtlasAuthStatus>
+    signIn: () => Promise<void>
+    signOut: () => Promise<AtlasAuthStatus>
+    bootstrap: (force?: boolean) => Promise<AtlasBootstrap>
+    subscribe: (cb: (status: AtlasAuthStatus) => void) => () => void
+  }
 }

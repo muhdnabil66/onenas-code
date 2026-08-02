@@ -14,6 +14,7 @@ import {
   useWslServers,
 } from "@opencode-ai/app"
 import type { UpdaterState } from "@opencode-ai/app/updater"
+import type { AtlasAuthStatus } from "../preload/types"
 import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
 import { createMemoryHistory, MemoryRouter, type BaseRouterProps } from "@solidjs/router"
@@ -27,7 +28,6 @@ import { resetZoom, setPinchZoomEnabled, webviewZoom, zoomIn, zoomOut } from "./
 import { windowFullscreen } from "./window-fullscreen"
 import { availableStartupServer, readyWslConnections } from "./wsl/connections"
 import "./styles.css"
-import { Splash } from "@opencode-ai/ui/logo"
 import { useTheme } from "@opencode-ai/ui/theme/context"
 
 const root = document.getElementById("root")
@@ -59,11 +59,12 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 }
 
 void initI18n()
+window.__ONENAS_MANAGED__ = true
 
 const [updaterState, setUpdaterState] = createSignal<UpdaterState>({ status: "disabled" })
 void window.api.updater.subscribe(setUpdaterState)
 
-const deepLinkEvent = "opencode:deep-link"
+const deepLinkEvent = "onenas-code:deep-link"
 
 type DesktopWindowState = {
   id?: string
@@ -319,12 +320,72 @@ listenForDeepLinks()
 function LoadingSplash() {
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base">
-      <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+      <div class="animate-pulse text-center">
+        <div class="text-18-medium tracking-[-0.03em] text-text-strong">ONeNas Code</div>
+        <div class="mt-1 text-11-medium uppercase tracking-[0.16em] text-text-weak">By AtlasFlux</div>
+      </div>
     </div>
   )
 }
 
-function DesktopRoot(props: { windowState: DesktopWindowState }) {
+let atlasLoginInProgress = false
+
+function AtlasSignIn(props: { status?: AtlasAuthStatus; loading: boolean }) {
+  const [starting, setStarting] = createSignal(false)
+  const signIn = async () => {
+    setStarting(true)
+    atlasLoginInProgress = true
+    await window.api.atlasAuth.signIn().catch(() => {
+      atlasLoginInProgress = false
+      setStarting(false)
+    })
+  }
+  return (
+    <div class="h-dvh w-screen flex items-center justify-center bg-background-base p-6">
+      <div class="w-full max-w-md rounded-2xl border border-border-weak-base bg-background-stronger p-8 shadow-xl">
+        <div class="text-12-medium uppercase tracking-[0.16em] text-text-weak">By AtlasFlux</div>
+        <h1 class="mt-3 text-2xl font-semibold tracking-tight text-text-strong">ONeNas Code</h1>
+        <p class="mt-3 text-14-regular leading-6 text-text-weak">
+          Sign in with your AtlasFlux AI account. Models, credits and policy are always supplied by ai.atlasflux.my.
+        </p>
+        <button
+          type="button"
+          class="mt-6 w-full rounded-lg bg-text-strong px-4 py-3 text-14-medium text-background-base disabled:opacity-50"
+          disabled={props.loading || starting()}
+          onClick={() => void signIn()}
+        >
+          {starting() ? "Opening AtlasFlux AI..." : "Sign in with AtlasFlux AI"}
+        </button>
+        <Show when={props.status?.error}>
+          <p class="mt-4 text-12-regular text-text-weak">{props.status?.error}</p>
+        </Show>
+      </div>
+    </div>
+  )
+}
+
+function AtlasAccountBadge(props: { status: AtlasAuthStatus }) {
+  const signOut = async () => {
+    await window.api.atlasAuth.signOut()
+    location.reload()
+  }
+  return (
+    <div class="fixed bottom-3 right-3 z-[100] flex items-center gap-2 rounded-lg border border-border-weak-base bg-background-stronger/95 px-3 py-2 shadow-lg backdrop-blur">
+      <span class={props.status.online ? "size-2 rounded-full bg-green-500" : "size-2 rounded-full bg-amber-500"} />
+      <div class="max-w-48">
+        <div class="truncate text-12-medium text-text-strong">Signed in with AtlasFlux AI</div>
+        <div class="truncate text-11-regular text-text-weak">
+          {props.status.profile?.email ?? props.status.profile?.name ?? (props.status.online ? "Connected" : "Offline")}
+        </div>
+      </div>
+      <button type="button" class="text-11-medium text-text-weak hover:text-text-strong" onClick={() => void signOut()}>
+        Sign out
+      </button>
+    </div>
+  )
+}
+
+function DesktopRoot(props: { windowState: DesktopWindowState; auth: AtlasAuthStatus }) {
   const platform = createPlatform(props.windowState)
   const loadLocale = async () => {
     const current = await platform.storage?.("opencode.global.dat").getItem("language")
@@ -409,6 +470,7 @@ function DesktopRoot(props: { windowState: DesktopWindowState }) {
               }
             >
               <Inner />
+              <AtlasAccountBadge status={props.auth} />
             </AppInterface>
           )}
         </Show>
@@ -433,9 +495,25 @@ render(() => {
     return { id: await api.getWindowID?.() }
   })
 
+  const [auth, { refetch }] = createResource(() => window.api.atlasAuth.status())
+  window.api.atlasAuth.subscribe((status) => {
+    void refetch()
+    if (atlasLoginInProgress && status.authenticated) window.api.relaunch()
+  })
+
   return (
-    <Show when={windowState.latest} fallback={<LoadingSplash />} keyed>
-      {(state) => <DesktopRoot windowState={state} />}
+    <Show when={!auth.loading} fallback={<LoadingSplash />}>
+      <Show
+        when={auth.latest?.authenticated ? auth.latest : undefined}
+        fallback={<AtlasSignIn status={auth.latest} loading={auth.loading} />}
+        keyed
+      >
+        {(status) => (
+          <Show when={windowState.latest} fallback={<LoadingSplash />} keyed>
+            {(state) => <DesktopRoot windowState={state} auth={status} />}
+          </Show>
+        )}
+      </Show>
     </Show>
   )
 }, root!)

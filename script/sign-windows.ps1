@@ -21,8 +21,7 @@ $vars = @{
 }
 
 if ($vars.Values | Where-Object { -not $_ }) {
-  Write-Host "Skipping Windows signing because Azure Artifact Signing is not configured"
-  exit 0
+  throw "Azure Trusted Signing is required for an ONeNas Code pilot release"
 }
 
 $moduleVersion = "0.5.8"

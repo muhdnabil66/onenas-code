@@ -6,6 +6,7 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from "electron"
 import type { DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
 
 import type { FatalRendererError, ServerReadyData, TitlebarTheme } from "../preload/types"
+import type { AtlasAuthStatus, AtlasBootstrap } from "../preload/types"
 import { runDesktopMenuAction } from "./desktop-menu-actions"
 import { setForceFocus } from "./debug"
 import { assertAttachmentBudget, createPickedFileAuthorizations } from "./attachment-picker"
@@ -48,6 +49,12 @@ type Deps = {
   setBackgroundColor: (color: string) => void
   exportDebugLogs: () => Promise<string>
   recordFatalRendererError: (error: FatalRendererError) => Promise<void> | void
+  atlasAuth: {
+    status: () => Promise<AtlasAuthStatus>
+    signIn: () => Promise<void>
+    signOut: () => Promise<AtlasAuthStatus>
+    bootstrap: (force?: boolean) => Promise<AtlasBootstrap>
+  }
 }
 
 export function registerIpcHandlers(deps: Deps) {
@@ -93,6 +100,12 @@ export function registerIpcHandlers(deps: Deps) {
   )
   ipcMain.handle("record-fatal-renderer-error", (_event: IpcMainInvokeEvent, error: FatalRendererError) =>
     deps.recordFatalRendererError(error),
+  )
+  ipcMain.handle("atlas-auth-status", () => deps.atlasAuth.status())
+  ipcMain.handle("atlas-auth-sign-in", () => deps.atlasAuth.signIn())
+  ipcMain.handle("atlas-auth-sign-out", () => deps.atlasAuth.signOut())
+  ipcMain.handle("atlas-auth-bootstrap", (_event: IpcMainInvokeEvent, force?: boolean) =>
+    deps.atlasAuth.bootstrap(force),
   )
   ipcMain.handle("store-get", (_event: IpcMainInvokeEvent, name: string, key: string) => {
     try {

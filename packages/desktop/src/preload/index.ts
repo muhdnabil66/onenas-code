@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron"
-import type { ElectronAPI, WslServersEvent } from "./types"
+import type { AtlasAuthStatus, ElectronAPI, WslServersEvent } from "./types"
 import type { UpdaterState } from "@opencode-ai/app/updater"
 
 const updaterCallbacks = new Set<(state: UpdaterState) => void>()
@@ -127,6 +127,17 @@ const api: ElectronAPI = {
   exportDebugLogs: () => ipcRenderer.invoke("export-debug-logs"),
   setForceFocus: (enabled) => ipcRenderer.invoke("set-force-focus", enabled),
   recordFatalRendererError: (error) => ipcRenderer.invoke("record-fatal-renderer-error", error),
+  atlasAuth: {
+    status: () => ipcRenderer.invoke("atlas-auth-status"),
+    signIn: () => ipcRenderer.invoke("atlas-auth-sign-in"),
+    signOut: () => ipcRenderer.invoke("atlas-auth-sign-out"),
+    bootstrap: (force) => ipcRenderer.invoke("atlas-auth-bootstrap", force),
+    subscribe: (cb) => {
+      const handler = (_: unknown, status: AtlasAuthStatus) => cb(status)
+      ipcRenderer.on("atlas-auth-state", handler)
+      return () => ipcRenderer.removeListener("atlas-auth-state", handler)
+    },
+  },
 }
 
 contextBridge.exposeInMainWorld("api", api)

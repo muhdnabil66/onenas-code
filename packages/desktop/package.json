@@ -1,13 +1,13 @@
 {
-  "name": "@opencode-ai/desktop",
+  "name": "@onenas-code/desktop",
   "private": true,
   "version": "1.18.11",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://opencode.ai",
+  "homepage": "https://onenas.atlasflux.my",
   "author": {
-    "name": "OpenCode",
-    "email": "hello@opencode.ai"
+    "name": "AtlasFlux",
+    "email": "support@atlasflux.my"
   },
   "scripts": {
     "typecheck": "tsgo -b",

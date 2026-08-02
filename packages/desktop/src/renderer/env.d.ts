@@ -6,5 +6,6 @@ declare global {
     __OPENCODE__?: {
       deepLinks?: string[]
     }
+    __ONENAS_MANAGED__?: boolean
   }
 }

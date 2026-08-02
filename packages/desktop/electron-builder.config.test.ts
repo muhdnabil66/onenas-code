@@ -4,9 +4,9 @@ import type { Configuration } from "electron-builder"
 const legacyDesktopEntry = "resources/linux/opencode-desktop.desktop"
 
 const channels = [
-  { channel: "dev", appId: "ai.opencode.desktop.dev" },
-  { channel: "beta", appId: "ai.opencode.desktop.beta" },
-  { channel: "prod", appId: "ai.opencode.desktop" },
+  { channel: "dev", appId: "my.onenas.code.dev" },
+  { channel: "beta", appId: "my.onenas.code.beta" },
+  { channel: "prod", appId: "my.onenas.code" },
 ] as const
 
 for (const channel of channels) {
@@ -28,6 +28,22 @@ for (const channel of channels) {
     expect(config.rpm?.fpm).toContainEqual(expect.stringContaining(`/usr/share/metainfo/${channel.appId}.metainfo.xml`))
   })
 }
+
+test("packages the branded Windows identity", async () => {
+  const previous = process.env.OPENCODE_CHANNEL
+  process.env.OPENCODE_CHANNEL = "prod"
+  const module = await import("./electron-builder.config.ts?onenas-windows")
+  const config = module.default as Configuration
+  if (previous === undefined) delete process.env.OPENCODE_CHANNEL
+  else process.env.OPENCODE_CHANNEL = previous
+
+  expect(config.productName).toBe("ONeNas Code")
+  expect(config.artifactName).toBe("ONeNas-Code-Setup-${version}-${arch}.${ext}")
+  expect(config.protocols).toEqual({ name: "ONeNas Code", schemes: ["onenas-code"] })
+  expect(config.win?.target).toContain("nsis")
+  expect(config.win?.verifyUpdateCodeSignature).toBe(true)
+  expect(config.publish).toBeUndefined()
+})
 
 test("keeps a hidden prod launcher for old Linux pins", async () => {
   const previous = process.env.OPENCODE_CHANNEL
