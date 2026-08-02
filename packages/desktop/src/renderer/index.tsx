@@ -332,13 +332,23 @@ let atlasLoginInProgress = false
 
 function AtlasSignIn(props: { status?: AtlasAuthStatus; loading: boolean }) {
   const [starting, setStarting] = createSignal(false)
+  const [browserOpened, setBrowserOpened] = createSignal(false)
+  const [loginError, setLoginError] = createSignal<string>()
   const signIn = async () => {
     setStarting(true)
+    setLoginError(undefined)
     atlasLoginInProgress = true
-    await window.api.atlasAuth.signIn().catch(() => {
-      atlasLoginInProgress = false
-      setStarting(false)
-    })
+    await window.api.atlasAuth
+      .signIn()
+      .then(() => {
+        setBrowserOpened(true)
+        setStarting(false)
+      })
+      .catch((error: unknown) => {
+        atlasLoginInProgress = false
+        setStarting(false)
+        setLoginError(error instanceof Error ? error.message : "Could not open AtlasFlux AI")
+      })
   }
   return (
     <div class="h-dvh w-screen flex items-center justify-center bg-background-base p-6">
@@ -354,10 +364,19 @@ function AtlasSignIn(props: { status?: AtlasAuthStatus; loading: boolean }) {
           disabled={props.loading || starting()}
           onClick={() => void signIn()}
         >
-          {starting() ? "Opening AtlasFlux AI..." : "Sign in with AtlasFlux AI"}
+          {starting()
+            ? "Opening AtlasFlux AI..."
+            : browserOpened()
+              ? "Open AtlasFlux AI again"
+              : "Sign in with AtlasFlux AI"}
         </button>
-        <Show when={props.status?.error}>
-          <p class="mt-4 text-12-regular text-text-weak">{props.status?.error}</p>
+        <Show when={browserOpened()}>
+          <p class="mt-4 text-12-regular leading-5 text-text-weak">
+            Complete sign-in and approval in your browser. ONeNas Code will continue automatically.
+          </p>
+        </Show>
+        <Show when={loginError() ?? props.status?.error}>
+          {(error) => <p class="mt-4 text-12-regular text-text-weak">{error()}</p>}
         </Show>
       </div>
     </div>
@@ -495,9 +514,9 @@ render(() => {
     return { id: await api.getWindowID?.() }
   })
 
-  const [auth, { refetch }] = createResource(() => window.api.atlasAuth.status())
+  const [auth, { mutate }] = createResource(() => window.api.atlasAuth.status())
   window.api.atlasAuth.subscribe((status) => {
-    void refetch()
+    mutate(status)
     if (atlasLoginInProgress && status.authenticated) window.api.relaunch()
   })
 

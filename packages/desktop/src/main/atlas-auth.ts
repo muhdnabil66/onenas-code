@@ -132,6 +132,11 @@ export class AtlasAuthController {
     authorize.searchParams.set("state", pending.state)
     authorize.searchParams.set("app_version", app.getVersion())
     await shell.openExternal(authorize.toString())
+    this.emit({
+      authenticated: false,
+      online: true,
+      parentOrigin: this.parentOrigin,
+    })
   }
 
   async handleCallback(value: string) {
@@ -247,7 +252,10 @@ export class AtlasAuthController {
         authenticated: false,
         online: false,
         parentOrigin: this.parentOrigin,
-        error: error instanceof Error ? error.message : "Sign in required",
+        error:
+          error instanceof Error && error.message !== "Sign in with AtlasFlux AI is required"
+            ? error.message
+            : undefined,
       }
     }
   }

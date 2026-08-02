@@ -3,7 +3,7 @@ import { mkdirSync, rmSync } from "node:fs"
 import * as http from "node:http"
 import { createServer } from "node:net"
 import { homedir, tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, resolve } from "node:path"
 import { getCACertificates, setDefaultCACertificates } from "node:tls"
 import type { Event } from "electron"
 import { app, BrowserWindow } from "electron"
@@ -292,7 +292,12 @@ const main = Effect.gen(function* () {
       }),
     ),
   )
-  app.setAsDefaultProtocolClient("onenas-code")
+  if (process.defaultApp && process.argv[1]) {
+    app.setAsDefaultProtocolClient("onenas-code", process.execPath, [resolve(process.argv[1])])
+  } else {
+    app.setAsDefaultProtocolClient("onenas-code")
+  }
+  emitDeepLinks(process.argv.filter((arg: string) => arg.startsWith("onenas-code://")))
   registerRendererProtocol()
   setDockIcon()
   const updater = setupAutoUpdater(stopSidecars)
