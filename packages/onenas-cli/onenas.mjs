@@ -3,7 +3,7 @@ import http from "node:http"
 import fs from "node:fs"
 import path from "node:path"
 import os from "node:os"
-import { execFileSync } from "node:child_process"
+import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -364,13 +364,11 @@ async function main() {
   console.log(`  Starting agent...\n`)
 
   const args = process.argv.slice(2).filter((a) => !["login", "logout", "status", "models", "help"].includes(a))
-  try {
-    execFileSync(binary, args, { stdio: "inherit", env: { ...process.env } })
-  } catch (err) {
-    if (err.status !== undefined) process.exit(err.status)
-  } finally {
-    await bridge.stop()
-  }
+  await new Promise((resolve) => {
+    const child = spawn(binary, args, { stdio: "inherit", env: { ...process.env } })
+    child.on("exit", (code) => resolve(code ?? 1))
+  })
+  await bridge.stop()
 }
 
 main().catch((err) => {
