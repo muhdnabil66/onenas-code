@@ -4,7 +4,9 @@ import fs from "node:fs"
 import path from "node:path"
 import os from "node:os"
 import { execFileSync } from "node:child_process"
+import { fileURLToPath } from "node:url"
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const VERSION = "0.1.0"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
@@ -56,7 +58,7 @@ async function exchangeCode(code, codeVerifier) {
   const res = await fetch(`${PARENT_ORIGIN}/api/desktop/onenas-code/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: REDIRECT_URI, client_id: CLIENT_ID }),
+    body: JSON.stringify({ grant_type: "authorization_code", code, code_verifier: codeVerifier, redirect_uri: REDIRECT_URI, client_id: CLIENT_ID }),
   })
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status} ${await res.text()}`)
   const data = await res.json()
@@ -180,6 +182,7 @@ async function startBridge(getToken) {
       const chunks = []
       for await (const chunk of request) chunks.push(chunk)
       const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"))
+      console.log("[bridge] chat request:", payload.model, "messages:", payload.messages?.length)
       if (!payload.model) {
         response.writeHead(400, { "content-type": "application/json" })
         response.end(JSON.stringify({ error: { message: "A model is required" } }))
@@ -219,11 +222,13 @@ async function startBridge(getToken) {
       })
 
       relay.addEventListener("open", () => {
+        console.log("[bridge] relay connected, authenticating...")
         relay.send(JSON.stringify({ type: "authenticate", token: approval.relay.token }))
       })
 
       relay.addEventListener("message", (event) => {
         const message = JSON.parse(String(event.data))
+        console.log("[bridge] relay message:", message.type)
         if (message.type === "authenticated") {
           authenticated = true
           relay.send(JSON.stringify({ type: "run.execute", runId: approval.runId, model: payload.model, payload }))
@@ -241,7 +246,8 @@ async function startBridge(getToken) {
         }
       })
 
-      relay.addEventListener("error", () => {
+      relay.addEventListener("error", (err) => {
+        console.error("[bridge] relay error:", err.message || err)
         if (!response.headersSent) {
           response.writeHead(503, { "content-type": "application/json" })
           response.end(JSON.stringify({ error: { message: "AtlasFlux relay is unavailable" } }))
@@ -268,10 +274,9 @@ async function startBridge(getToken) {
 }
 
 function findOpencodeBinary() {
-  const rootPkg = path.resolve(new URL(import.meta.url).pathname, "../../")
   const candidates = [
-    path.join(rootPkg, "../opencode/bin/opencode"),
-    path.join(rootPkg, "../../opencode/bin/opencode"),
+    path.join(__dirname, "../desktop/resources/opencode-cli.exe"),
+    path.join(__dirname, "../opencode/bin/opencode"),
   ]
   for (const c of candidates) {
     try { if (fs.existsSync(c)) return c } catch {}
