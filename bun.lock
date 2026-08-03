@@ -562,7 +562,7 @@
     },
     "packages/onenas-cli": {
       "name": "onenas-code",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "bin": {
         "onenas": "./onenas.mjs",
       },
