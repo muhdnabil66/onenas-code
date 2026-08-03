@@ -1,6 +1,6 @@
 {
   "name": "onenas-code",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "ONeNas Code by AtlasFlux - AI coding agent CLI",
   "type": "module",
   "bin": {

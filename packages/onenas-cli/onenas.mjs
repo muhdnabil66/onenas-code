@@ -8,7 +8,7 @@ import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.2.2"
+const VERSION = "0.3.0"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const REDIRECT_PORT = 43210
@@ -308,13 +308,39 @@ function showHelp() {
     onenas                  Start the TUI agent
     onenas login            Sign in to AtlasFlux AI
     onenas logout           Sign out
-    onenas status           Show current account
+    onenas account          Show account details and balance
+    onenas balance          Show remaining credits
     onenas models           List available models
+    onenas sync             Refresh account and model data
     onenas help             Show this help
 
   Environment:
     ONENAS_PARENT_ORIGIN    AtlasFlux parent URL (default: https://ai.atlasflux.my)
   `)
+}
+
+function formatBalance(balance) {
+  if (!balance) return "0"
+  if (typeof balance === "object") return `${balance.balance ?? 0} ${balance.currency ?? ""}`.trim()
+  return String(balance)
+}
+
+async function printAccount(tokens, { detail = true } = {}) {
+  const bootstrap = await fetchBootstrap(tokens.access_token)
+  const user = bootstrap.user || {}
+  const plan = bootstrap.plan || {}
+  const credits = bootstrap.credits || {}
+  console.log(`\n  Signed in as: ${user.name || user.id || "unknown"}`)
+  console.log(`  Email: ${user.email || "-"}`)
+  console.log(`  Plan: ${plan.name || "-"}`)
+  if (detail) {
+    console.log(`  Credits: ${credits.balance ?? 0} ${credits.currency || ""}`)
+    console.log(`  Models: ${(bootstrap.models || []).length} available`)
+    console.log(`  Workspace: ${bootstrap.workspace?.id || "-"}`)
+    console.log(`  Account ID: ${user.id || "-"}`)
+  }
+  console.log()
+  return bootstrap
 }
 
 async function main() {
@@ -341,12 +367,22 @@ async function main() {
     tokens = await login()
   }
 
-  if (command === "status") {
+  if (command === "status" || command === "account") {
+    await printAccount(tokens)
+    return
+  }
+
+  if (command === "balance") {
     const bootstrap = await fetchBootstrap(tokens.access_token)
-    console.log(`\n  Signed in as: ${bootstrap.user.name || bootstrap.user.id}`)
-    console.log(`  Plan: ${bootstrap.plan.name}`)
-    console.log(`  Credits: ${bootstrap.credits.balance} ${bootstrap.credits.currency}`)
-    console.log(`  Models: ${bootstrap.models.length} available\n`)
+    const credits = bootstrap.credits || {}
+    console.log(`\n  Credits: ${credits.balance ?? 0} ${credits.currency || ""}`)
+    console.log(`  Plan: ${(bootstrap.plan || {}).name || "-"}\n`)
+    return
+  }
+
+  if (command === "sync") {
+    const bootstrap = await fetchBootstrap(tokens.access_token)
+    console.log(`\n  Synced with AtlasFlux AI: ${(bootstrap.models || []).length} models, ${formatBalance(bootstrap.credits)} credits\n`)
     return
   }
 
@@ -380,7 +416,9 @@ async function main() {
   console.log(`  Credits: ${bootstrap.credits.balance}`)
   console.log(`  Starting agent...\n`)
 
-  const args = process.argv.slice(2).filter((a) => !["login", "logout", "status", "models", "help"].includes(a))
+  const args = process.argv.slice(2).filter(
+    (a) => !["login", "logout", "status", "account", "balance", "sync", "models", "help"].includes(a),
+  )
   await new Promise((resolve) => {
     const child = spawn(binary, args, { stdio: "inherit", env: { ...process.env } })
     child.on("exit", (code) => resolve(code ?? 1))

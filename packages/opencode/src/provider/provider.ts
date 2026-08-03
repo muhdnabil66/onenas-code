@@ -458,9 +458,9 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
-            "X-Source": "opencode",
+            "HTTP-Referer": "https://onenas.atlasflux.my/",
+            "X-Title": "onenas",
+            "X-Source": "onenas",
           },
         },
       }),
@@ -469,8 +469,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://onenas.atlasflux.my/",
+            "X-Title": "onenas",
           },
         },
       }),
@@ -479,8 +479,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: provider.source === "config",
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://onenas.atlasflux.my/",
+            "X-Title": "onenas",
             "X-BILLING-INVOKE-ORIGIN": "ONeNas Code",
           },
         },
@@ -490,8 +490,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://opencode.ai/",
-            "x-title": "opencode",
+            "http-referer": "https://onenas.atlasflux.my/",
+            "x-title": "onenas",
           },
         },
       }),
@@ -596,8 +596,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://onenas.atlasflux.my/",
+            "X-Title": "onenas",
           },
         },
       }),
@@ -854,8 +854,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://opencode.ai/",
-            "X-Title": "opencode",
+            "HTTP-Referer": "https://onenas.atlasflux.my/",
+            "X-Title": "onenas",
           },
         },
       }),

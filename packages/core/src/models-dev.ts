@@ -20,7 +20,7 @@ const InterleavedField = Schema.Union([
   Schema.String,
 ])
 
-const USER_AGENT = `opencode/${InstallationChannel}/${InstallationVersion}/${Flag.OPENCODE_CLIENT}`
+const USER_AGENT = `onenas/${InstallationChannel}/${InstallationVersion}/${Flag.OPENCODE_CLIENT}`
 
 const CostTier = Schema.Struct({
   input: Schema.Finite,
@@ -157,11 +157,9 @@ const layer = Layer.effect(
       ),
     )
 
-    const source = Flag.OPENCODE_MODELS_URL || "https://models.opencode.ai"
-    const filepath = path.join(
-      Global.Path.cache,
-      source === "https://models.opencode.ai" ? "models.json" : `models-${Hash.fast(source)}.json`,
-    )
+    const source = Flag.OPENCODE_MODELS_URL
+    if (!source) return Service.of({ get: () => Effect.succeed({}), refresh: () => Effect.succeed(undefined) })
+    const filepath = path.join(Global.Path.cache, `models-${Hash.fast(source)}.json`)
     const ttl = Duration.minutes(5)
     const lockKey = `models-dev:${filepath}`
 
@@ -252,7 +250,7 @@ const layer = Layer.effect(
       )
     })
 
-    if (!Flag.OPENCODE_DISABLE_MODELS_FETCH && !process.argv.includes("--get-yargs-completions")) {
+    if (!Flag.OPENCODE_DISABLE_MODELS_FETCH && source && !process.argv.includes("--get-yargs-completions")) {
       // Schedule.spaced runs the effect once, then waits between completions.
       yield* Effect.forkScoped(refresh().pipe(Effect.repeat(Schedule.spaced("60 minutes")), Effect.ignore))
     }
