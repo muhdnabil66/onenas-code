@@ -6,8 +6,9 @@ import os from "node:os"
 
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
-const REDIRECT_PORT = 43210
-const REDIRECT_URI = `http://127.0.0.1:${REDIRECT_PORT}/callback`
+const BASE_REDIRECT_PORT = 43210
+const MAX_PORT_RETRIES = 10
+const REDIRECT_URI = (port: number) => `http://127.0.0.1:${port}/callback`
 const TOKEN_DIR = path.join(os.homedir(), ".onenas-code")
 const TOKEN_FILE = path.join(TOKEN_DIR, "auth.json")
 
@@ -75,18 +76,19 @@ export async function fetchBootstrap(token: string): Promise<BootstrapData> {
   return res.json() as Promise<BootstrapData>
 }
 
-export async function exchangeCode(code: string, codeVerifier: string): Promise<AuthTokens> {
+export async function exchangeCode(code: string, codeVerifier: string, redirectUri: string): Promise<AuthTokens> {
   const res = await fetch(`${PARENT_ORIGIN}/api/desktop/onenas-code/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      grant_type: "authorization_code",
       code,
       code_verifier: codeVerifier,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: redirectUri,
       client_id: CLIENT_ID,
     }),
   })
-  if (!res.ok) throw new Error(`Token exchange failed: ${res.status} ${await res.text()}`)
+  if (!res.ok) throw new Error("Unable to complete login")
   const data = (await res.json()) as { access_token: string; refresh_token?: string; expires_in?: number }
   const tokens: AuthTokens = {
     access_token: data.access_token,
@@ -97,69 +99,82 @@ export async function exchangeCode(code: string, codeVerifier: string): Promise<
   return tokens
 }
 
-export async function login(): Promise<AuthTokens> {
-  const { verifier, challenge } = generatePKCE()
-  const state = generateState()
-
-  const authUrl = new URL(`${PARENT_ORIGIN}/desktop/authorize`)
-  authUrl.searchParams.set("client_id", CLIENT_ID)
-  authUrl.searchParams.set("redirect_uri", REDIRECT_URI)
-  authUrl.searchParams.set("code_challenge", challenge)
-  authUrl.searchParams.set("code_challenge_method", "S256")
-  authUrl.searchParams.set("state", state)
-
+export function login(): Promise<AuthTokens> {
   return new Promise((resolve, reject) => {
-    const server = http.createServer(async (req, res) => {
-      const url = new URL(req.url || "/", `http://127.0.0.1:${REDIRECT_PORT}`)
+    const attemptPort = (attempt: number) => {
+      const port = BASE_REDIRECT_PORT + attempt
+      const redirectUri = REDIRECT_URI(port)
+      const { verifier, challenge } = generatePKCE()
+      const state = generateState()
 
-      if (url.pathname === "/callback") {
-        const code = url.searchParams.get("code")
-        const returnedState = url.searchParams.get("state")
+      const authUrl = new URL(`${PARENT_ORIGIN}/desktop/authorize`)
+      authUrl.searchParams.set("client_id", CLIENT_ID)
+      authUrl.searchParams.set("redirect_uri", redirectUri)
+      authUrl.searchParams.set("code_challenge", challenge)
+      authUrl.searchParams.set("code_challenge_method", "S256")
+      authUrl.searchParams.set("state", state)
 
-        if (!code || returnedState !== state) {
-          res.writeHead(400, { "Content-Type": "text/html" })
-          res.end("<h1>Authentication failed</h1><p>Invalid or expired request.</p>")
-          server.close()
-          reject(new Error("Invalid auth callback"))
+      const server = http.createServer(async (req, res) => {
+        const url = new URL(req.url || "/", redirectUri)
+
+        if (url.pathname === "/callback") {
+          const code = url.searchParams.get("code")
+          const returnedState = url.searchParams.get("state")
+
+          if (!code || returnedState !== state) {
+            res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" })
+            res.end("<h1>Login failed</h1><p>Invalid or expired request.</p>")
+            server.close()
+            reject(new Error("Invalid auth callback"))
+            return
+          }
+
+          try {
+            const tokens = await exchangeCode(code, verifier, redirectUri)
+            res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
+            res.end("<h1>ONeNas Code</h1><p>Login successful! Close this window and return to the terminal.</p>")
+            server.close()
+            resolve(tokens)
+          } catch (err: any) {
+            res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" })
+            res.end("<h1>Login failed</h1><p>Something went wrong. Please try again.</p>")
+            server.close()
+            reject(err)
+          }
           return
         }
 
-        try {
-          const tokens = await exchangeCode(code, verifier)
-          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
-          res.end("<h1>ONeNas Code</h1><p>Login successful! You can close this window and return to the terminal.</p>")
-          server.close()
-          resolve(tokens)
-        } catch (err: any) {
-          res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" })
-          res.end(`<h1>Login failed</h1><p>${err?.message ?? String(err)}</p>`)
-          server.close()
-          reject(err)
-        }
-        return
-      }
-
-      res.writeHead(404)
-      res.end("Not found")
-    })
-
-    server.listen(REDIRECT_PORT, "127.0.0.1", () => {
-      console.log(`\n  Opening browser for AtlasFlux login...\n`)
-      console.log(`  If browser doesn't open, visit:\n`)
-      console.log(`  ${authUrl.toString()}\n`)
-
-      import("open").then((open) => {
-        open.default(authUrl.toString()).catch(() => {})
-      }).catch(() => {
-        console.log(`  (Install 'open' package to auto-open browser: npm i -g open)`)
+        res.writeHead(404)
+        res.end("Not found")
       })
-    })
 
-    server.on("error", (err: any) => {
-      if (err.code === "EADDRINUSE") {
-        console.error(`\n  Port ${REDIRECT_PORT} is in use. Close other apps using it and try again.\n`)
-      }
-      reject(err)
-    })
+      server.listen(port, "127.0.0.1", () => {
+        console.log("")
+        console.log("  Opening browser for AtlasFlux login...")
+        console.log("")
+        console.log("  If browser doesn't open, visit:")
+        console.log(`  ${authUrl.toString()}`)
+        console.log("")
+        void import("open").then((mod) => {
+          mod.default(authUrl.toString()).catch(() => {})
+        }).catch(() => {
+          console.log("  (Install 'open' package to auto-open browser: npm i -g open)")
+        })
+      })
+
+      server.on("error", (err: any) => {
+        if (err.code === "EADDRINUSE") {
+          if (attempt + 1 < MAX_PORT_RETRIES) {
+            server.close()
+            attemptPort(attempt + 1)
+            return
+          }
+          reject(new Error("Unable to find an available port for login. Please free up port 43210 and try again."))
+          return
+        }
+        reject(new Error("Unable to start login. Please try again."))
+      })
+    }
+    attemptPort(0)
   })
 }
