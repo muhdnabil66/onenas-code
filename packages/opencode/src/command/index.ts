@@ -46,6 +46,9 @@ export function hints(template: string) {
 export const Default = {
   INIT: "init",
   REVIEW: "review",
+  ACCOUNT: "account",
+  BALANCE: "balance",
+  SYNC: "sync",
 } as const
 
 export interface Interface {
@@ -85,6 +88,21 @@ const layer = Layer.effect(
         },
         subtask: true,
         hints: hints(PROMPT_REVIEW),
+      }
+
+      for (const name of [Default.ACCOUNT, Default.BALANCE, Default.SYNC]) {
+        commands[name] = {
+          name,
+          description:
+            name === Default.ACCOUNT
+              ? "show AtlasFlux account details and balance"
+              : name === Default.BALANCE
+                ? "show remaining AtlasFlux credits"
+                : "refresh AtlasFlux account and model data",
+          source: "command",
+          template: "",
+          hints: [],
+        }
       }
 
       for (const [name, command] of Object.entries(cfg.command ?? {})) {

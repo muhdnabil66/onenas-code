@@ -1353,12 +1353,51 @@ const layer = Layer.effect(
       return yield* state.startShell(input.sessionID, lastAssistant(input.sessionID), shellImpl(input, ready), ready)
     })
 
+    const atlasfluxResult = (command: string): Effect.Effect<Option.Option<string>> =>
+      Effect.gen(function* () {
+        if (!["account", "balance", "sync"].includes(command)) return Option.none()
+        const result = yield* Effect.promise(async () => {
+          try {
+            const authPath = path.join(os.homedir(), ".onenas-code", "auth.json")
+            const auth = JSON.parse(await Bun.file(authPath).text())
+            if (!auth?.access_token) return "Not signed in to AtlasFlux. Run `onenas login` in your terminal."
+            const res = await fetch("https://ai.atlasflux.my/api/desktop/onenas-code/bootstrap", {
+              headers: { Authorization: `Bearer ${auth.access_token}` },
+            })
+            if (!res.ok) return `AtlasFlux API error: ${res.status}`
+            const b = await res.json()
+            const user = b.user || {}
+            const plan = b.plan || {}
+            const credits = b.credits || {}
+            const lines: string[] = []
+            lines.push(`**AtlasFlux account**`)
+            lines.push(`- Name: ${user.name || user.id || "-"}`)
+            if (user.email) lines.push(`- Email: ${user.email}`)
+            lines.push(`- Plan: ${plan.name || "-"}`)
+            lines.push(`- Credits: ${credits.balance ?? 0} ${credits.currency || ""}`)
+            if (command === "account") {
+              lines.push(`- Models available: ${(b.models || []).length}`)
+              if (b.workspace?.id) lines.push(`- Workspace: ${b.workspace.id}`)
+            }
+            if (command === "sync") {
+              lines.push(`- Model count: ${(b.models || []).length}`)
+              lines.push(`- Synced at: ${new Date().toLocaleString()}`)
+            }
+            return lines.join("\n")
+          } catch (error) {
+            return `Failed to fetch AtlasFlux data: ${error instanceof Error ? error.message : String(error)}`
+          }
+        })
+        return Option.some(result)
+      })
+
     const command = Effect.fn("SessionPrompt.command")(function* (input: CommandInput) {
       yield* Effect.logInfo("command", {
         "session.id": input.sessionID,
         command: input.command,
         agent: input.agent,
       })
+      const ctx = yield* InstanceState.context
       const cmd = yield* commands.get(input.command)
       if (!cmd) {
         const available = (yield* commands.list()).map((c) => c.name)
@@ -1367,6 +1406,65 @@ const layer = Layer.effect(
         yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() })
         throw error
       }
+
+      const atlasfluxCommand = yield* atlasfluxResult(input.command)
+      if (Option.isSome(atlasfluxCommand)) {
+        const text = atlasfluxCommand.value
+        const modelExit = yield* currentModel(input.sessionID).pipe(Effect.exit)
+        const sessionModel = Exit.isSuccess(modelExit)
+          ? { providerID: modelExit.value.providerID, modelID: modelExit.value.modelID }
+          : { providerID: ProviderV2.ID.make("atlasflux"), modelID: ModelV2.ID.make("") }
+        const userMsg: SessionV1.User = {
+          id: MessageID.ascending(),
+          sessionID: input.sessionID,
+          time: { created: Date.now() },
+          role: "user",
+          agent: "build",
+          model: sessionModel,
+        }
+        yield* sessions.updateMessage(userMsg)
+        const userPart: SessionV1.Part = {
+          type: "text",
+          id: PartID.ascending(),
+          messageID: userMsg.id,
+          sessionID: input.sessionID,
+          text: `/${input.command}`,
+          synthetic: true,
+        }
+        yield* sessions.updatePart(userPart)
+        const msg: SessionV1.Assistant = {
+          id: MessageID.ascending(),
+          sessionID: input.sessionID,
+          parentID: userMsg.id,
+          mode: "build",
+          agent: "build",
+          variant: undefined,
+          path: { cwd: ctx.directory, root: ctx.worktree },
+          cost: 0,
+          time: { created: Date.now(), completed: Date.now() },
+          role: "assistant",
+          tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+          modelID: sessionModel.modelID,
+          providerID: sessionModel.providerID,
+        }
+        yield* sessions.updateMessage(msg)
+        const textPart: SessionV1.Part = {
+          type: "text",
+          id: PartID.ascending(),
+          messageID: msg.id,
+          sessionID: input.sessionID,
+          text,
+        }
+        yield* sessions.updatePart(textPart)
+        yield* events.publish(Command.Event.Executed, {
+          name: input.command,
+          sessionID: input.sessionID,
+          arguments: input.arguments,
+          messageID: msg.id,
+        })
+        return { info: msg, parts: [textPart] }
+      }
+
       const agentName = cmd.agent ?? input.agent
 
       const raw = input.arguments.match(argsRegex) ?? []
