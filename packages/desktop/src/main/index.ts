@@ -291,7 +291,7 @@ const main = Effect.gen(function* () {
     ),
   )
   if (process.defaultApp && process.argv[1]) {
-    app.setAsDefaultProtocolClient("onenas-code", process.execPath, [resolve(process.argv[1])])
+    app.setAsDefaultProtocolClient("onenas-code", process.execPath, [app.getAppPath()])
   } else {
     app.setAsDefaultProtocolClient("onenas-code")
   }

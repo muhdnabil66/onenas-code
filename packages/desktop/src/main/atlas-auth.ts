@@ -151,6 +151,7 @@ export class AtlasAuthController {
   }
 
   async handleCallback(value: string) {
+    console.log("[DEBUG atlas-auth] handleCallback called with:", value.substring(0, 80) + "...")
     if (!this.isCallback(value)) return false
     const url = new URL(value)
     const pending = this.decrypt<Pending>(PENDING_KEY)
@@ -160,7 +161,9 @@ export class AtlasAuthController {
     if (url.searchParams.get("state") !== pending.state) throw new Error("Invalid sign-in state")
     const code = url.searchParams.get("code")
     if (!code) throw new Error("AtlasFlux AI did not return an authorization code")
+    console.log("[DEBUG atlas-auth] code:", code.substring(0, 20) + "...", "state:", url.searchParams.get("state")?.substring(0, 20) + "...")
 
+    console.log("[DEBUG atlas-auth] fetching token from:", new URL("/api/desktop/onenas-code/token", this.parentOrigin).toString())
     const response = await fetch(new URL("/api/desktop/onenas-code/token", this.parentOrigin), {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -172,13 +175,18 @@ export class AtlasAuthController {
         redirect_uri: CALLBACK_URI,
       }),
     })
-    if (!response.ok) throw new Error((await response.text()) || `Sign in failed (${response.status})`)
-    const token = await parseJson<TokenResponse>(response)
+    console.log("[DEBUG atlas-auth] token response status:", response.status, "ok:", response.ok)
+    const responseText = await response.text()
+    console.log("[DEBUG atlas-auth] token response body:", responseText.substring(0, 200))
+    if (!response.ok) throw new Error(responseText || `Sign in failed (${response.status})`)
+    const token = JSON.parse(responseText) as TokenResponse
+    console.log("[DEBUG atlas-auth] token received, access_token_preview:", token.access_token.substring(0, 50) + "...", "expires_in:", token.expires_in)
     this.save(TOKEN_KEY, {
       accessToken: token.access_token,
       refreshToken: token.refresh_token,
       expiresAt: Date.now() + token.expires_in * 1000,
     } satisfies Tokens)
+    console.log("[DEBUG atlas-auth] tokens saved, calling bootstrap...")
     await this.bootstrap(true)
     const status = await this.status()
     this.emit(status)
@@ -187,9 +195,14 @@ export class AtlasAuthController {
 
   private async tokens() {
     const tokens = this.decrypt<Tokens>(TOKEN_KEY)
+    console.log("[DEBUG atlas-auth] tokens() - decrypted:", !!tokens, "expiresAt:", tokens?.expiresAt, "now:", Date.now())
     if (!tokens) throw new Error("Sign in with AtlasFlux AI is required")
-    if (tokens.expiresAt > Date.now() + 60_000) return tokens
+    if (tokens.expiresAt > Date.now() + 60_000) {
+      console.log("[DEBUG atlas-auth] tokens() - using existing token, preview:", tokens.accessToken.substring(0, 50) + "...")
+      return tokens
+    }
 
+    console.log("[DEBUG atlas-auth] tokens() - refreshing token...")
     const response = await fetch(new URL("/api/desktop/onenas-code/token", this.parentOrigin), {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -210,6 +223,7 @@ export class AtlasAuthController {
       expiresAt: Date.now() + token.expires_in * 1000,
     }
     this.save(TOKEN_KEY, next)
+    console.log("[DEBUG atlas-auth] tokens() - refreshed, new token preview:", next.accessToken.substring(0, 50) + "...")
     return next
   }
 
@@ -218,6 +232,7 @@ export class AtlasAuthController {
     const headers = new Headers(init.headers)
     headers.set("authorization", `Bearer ${tokens.accessToken}`)
     headers.set("x-onenas-desktop-version", app.getVersion())
+    console.log("[DEBUG atlas-auth] authorizedFetch() - path:", path, "token_preview:", tokens.accessToken.substring(0, 50) + "...")
     return fetch(new URL(path, this.parentOrigin), { ...init, headers })
   }
 
@@ -226,10 +241,15 @@ export class AtlasAuthController {
       const cached = this.decrypt<AtlasBootstrap>(BOOTSTRAP_KEY)
       if (cached) return cached
     }
+    console.log("[DEBUG atlas-auth] bootstrap() - fetching from server...")
     const response = await this.authorizedFetch("/api/desktop/onenas-code/bootstrap")
-    if (!response.ok) throw new Error((await response.text()) || `Bootstrap failed (${response.status})`)
-    const bootstrap = await parseJson<AtlasBootstrap>(response)
+    console.log("[DEBUG atlas-auth] bootstrap() - response status:", response.status, "ok:", response.ok)
+    const responseText = await response.text()
+    console.log("[DEBUG atlas-auth] bootstrap() - response body:", responseText.substring(0, 300))
+    if (!response.ok) throw new Error(responseText || `Bootstrap failed (${response.status})`)
+    const bootstrap = JSON.parse(responseText) as AtlasBootstrap
     this.save(BOOTSTRAP_KEY, bootstrap)
+    console.log("[DEBUG atlas-auth] bootstrap() - success, user:", bootstrap.user?.id, "plan:", bootstrap.plan?.id)
     return bootstrap
   }
 
