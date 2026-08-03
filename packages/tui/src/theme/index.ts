@@ -284,8 +284,8 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   vercel,
   zenburn,
   carbonfox,
-  "onenes alpha": onenasAlpha,
-  "onenes myra": onenasMyra,
+  "onenas alpha": onenasAlpha,
+  "onenas myra": onenasMyra,
 }
 
 const pluginThemes: Record<string, ThemeJson> = {}

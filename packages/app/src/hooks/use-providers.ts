@@ -6,8 +6,6 @@ import { createEffect, createMemo, type Accessor } from "solid-js"
 import { selectProviderCatalog } from "./provider-catalog"
 
 export const popularProviders = [
-  "opencode",
-  "opencode-go",
   "anthropic",
   "github-copilot",
   "openai",
@@ -63,8 +61,7 @@ export function useProviders(directory: Accessor<string | undefined>) {
         ...Iterable.filter(
           providers().all,
           ([id]) =>
-            connected.has(id) &&
-            (id !== "opencode" || Object.values(providers().all.get(id)?.models ?? {}).some((m) => m.cost?.input)),
+            connected.has(id) && !id.startsWith("opencode"),
         ),
       ]
       return paid

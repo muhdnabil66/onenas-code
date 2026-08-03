@@ -4,9 +4,9 @@ import { expectAppVisible } from "../utils/waits"
 
 const directory = "C:/OpenCode/NewProject"
 
-test("creates a session in a new project, connects OpenCode Go, and selects its model", async ({ page }) => {
-  let connectedGo = false
-  let pendingGo = false
+test("creates a session in a new project, connects OpenAI, and selects its model", async ({ page }) => {
+  let connectedOpenAI = false
+  let pendingOpenAI = false
   const connections: Array<{ integrationID: string; body: unknown }> = []
 
   await mockOpenCodeServer(page, {
@@ -22,8 +22,8 @@ test("creates a session in a new project, connects OpenCode Go, and selects its 
     provider: () => ({
       all: [
         {
-          id: "opencode",
-          name: "OpenCode",
+          id: "atlasflux",
+          name: "AtlasFlux AI",
           models: {
             "free-model": {
               id: "free-model",
@@ -34,28 +34,28 @@ test("creates a session in a new project, connects OpenCode Go, and selects its 
           },
         },
         {
-          id: "opencode-go",
-          name: "OpenCode Go",
+          id: "openai",
+          name: "OpenAI",
           models: {
-            "go-model-1": {
-              id: "go-model-1",
-              name: "Go Model 1",
+            "gpt-model-1": {
+              id: "gpt-model-1",
+              name: "GPT Model 1",
               cost: { input: 1, output: 1 },
               limit: { context: 200_000 },
             },
           },
         },
       ],
-      connected: connectedGo ? ["opencode", "opencode-go"] : ["opencode"],
-      default: { providerID: "opencode", modelID: "free-model" },
+      connected: connectedOpenAI ? ["atlasflux", "openai"] : ["atlasflux"],
+      default: { providerID: "atlasflux", modelID: "free-model" },
     }),
-    integrationMethods: { "opencode-go": [{ type: "api", label: "API key" }] },
+    integrationMethods: { openai: [{ type: "api", label: "API key" }] },
     onConnectKey: (input) => {
       connections.push(input)
-      if (input.integrationID === "opencode-go") pendingGo = true
+      if (input.integrationID === "openai") pendingOpenAI = true
     },
     onInstanceDispose: () => {
-      if (pendingGo) connectedGo = true
+      if (pendingOpenAI) connectedOpenAI = true
     },
     sessions: [],
     pageMessages: () => ({ items: [] }),
@@ -79,19 +79,19 @@ test("creates a session in a new project, connects OpenCode Go, and selects its 
 
   const modelControl = page.locator('[data-action="prompt-model"]')
   await modelControl.click()
-  await expect(page.locator('[data-section="free-models"]')).toContainText("Free models provided by OpenCode")
+  await expect(page.locator('[data-section="free-models"]')).toContainText("Free models provided by ONeNas Code")
 
-  await page.locator('[data-provider-id="opencode-go"]').click()
-  await page.locator('[data-input="provider-api-key"]').fill("mock-go-api-key")
+  await page.locator('[data-provider-id="openai"]').click()
+  await page.locator('[data-input="provider-api-key"]').fill("mock-openai-api-key")
   await page.locator('[data-action="provider-connect-submit"]').click()
   await expect(page.locator('[data-component="dialog-v2"]')).toHaveCount(0)
-  expect(connections).toEqual([{ integrationID: "opencode-go", body: { type: "api", key: "mock-go-api-key" } }])
+  expect(connections).toEqual([{ integrationID: "openai", body: { type: "api", key: "mock-openai-api-key" } }])
 
   await expect(modelControl).toHaveAttribute("data-control-type", "popover")
   await modelControl.click()
-  const goModel = page.locator('[data-option-key="opencode-go:go-model-1"]')
-  await expect(goModel).toBeVisible()
-  await goModel.click()
+  const gptModel = page.locator('[data-option-key="openai:gpt-model-1"]')
+  await expect(gptModel).toBeVisible()
+  await gptModel.click()
 
-  await expect(modelControl).toContainText("Go Model 1")
+  await expect(modelControl).toContainText("GPT Model 1")
 })

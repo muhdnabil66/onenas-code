@@ -86,6 +86,7 @@ import * as TuiAudio from "./audio"
 import { win32DisableProcessedInput, win32FlushInputBuffer } from "./terminal-win32"
 import { destroyRenderer } from "./util/renderer"
 import { cliErrorMessage, errorFormat } from "./util/error"
+import { login as managedLogin, logout as managedLogout } from "./managed-auth"
 
 registerOpencodeSpinner()
 
@@ -951,6 +952,36 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         run: () => {
           local.permission.toggle()
           dialog.clear()
+        },
+      },
+      {
+        name: "auth.login",
+        title: "Log in to AtlasFlux",
+        category: "System",
+        slashName: "login",
+        slashAliases: ["signin"],
+        run: async () => {
+          dialog.clear()
+          toast.show({ message: "Opening AtlasFlux authorization...", variant: "info" })
+          try {
+            await managedLogin()
+            await sync.bootstrap({ fatal: false }).catch(() => undefined)
+            toast.show({ message: "AtlasFlux authorization successful", variant: "success" })
+          } catch (error) {
+            toast.error(error)
+          }
+        },
+      },
+      {
+        name: "auth.logout",
+        title: "Log out of AtlasFlux",
+        category: "System",
+        slashName: "logout",
+        slashAliases: ["signout"],
+        run: () => {
+          managedLogout()
+          dialog.clear()
+          toast.show({ message: "Signed out of AtlasFlux", variant: "success" })
         },
       },
     ].map((command) => ({

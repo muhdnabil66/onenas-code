@@ -75,15 +75,10 @@ async function exchangeCode(code, codeVerifier) {
   return tokens
 }
 
-function openBrowser(url) {
-  const platform = process.platform
+async function openBrowser(url) {
   try {
-    if (platform === "win32") {
-      const escapedUrl = url.replace(/["^&|<>]/g, "^$&")
-      execFileSync("cmd.exe", ["/d", "/s", "/c", `start "" "${escapedUrl}"`], { stdio: "ignore" })
-    }
-    else if (platform === "darwin") execFileSync("open", [url], { stdio: "ignore" })
-    else execFileSync("xdg-open", [url], { stdio: "ignore" })
+    const open = (await import("open")).default
+    await open(url)
   } catch {}
 }
 
@@ -130,7 +125,7 @@ function login() {
       console.log("  If browser doesn't open, visit:")
       console.log(`  ${authUrl}`)
       console.log("")
-      openBrowser(authUrl)
+      void openBrowser(authUrl)
     })
 
     server.on("error", (err) => {

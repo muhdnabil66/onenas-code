@@ -254,7 +254,7 @@ describe("session.retry.retryable", () => {
     expect(retryable).toEqual({ message: "Response decompression failed" })
   })
 
-  test("maps free limits to Go upsell action", () => {
+  test("maps free limits to AtlasFlux billing action", () => {
     const error = Schema.decodeUnknownSync(SessionV1.APIError.Schema)(
       new SessionV1.APIError({
         message: "Free usage exceeded",
@@ -267,20 +267,20 @@ describe("session.retry.retryable", () => {
       }).toObject(),
     )
 
-    expect(SessionRetry.retryable(error, "opencode")).toEqual({
-      message: SessionRetry.GO_UPSELL_MESSAGE,
+    expect(SessionRetry.retryable(error, "atlasflux")).toEqual({
+      message: SessionRetry.ATLASFLUX_ACCESS_MESSAGE,
       action: {
         reason: "free_tier_limit",
-        provider: "opencode",
-        title: "Free limit reached",
-        message: "Subscribe to OpenCode Go for reliable access to the best open-source models, starting at $5/month.",
-        label: "subscribe",
-        link: SessionRetry.GO_UPSELL_URL,
+        provider: "atlasflux",
+        title: "AtlasFlux access required",
+        message: "Upgrade to AtlasFlux Pro or add Credits from the AtlasFlux billing page.",
+        label: "open billing",
+        link: SessionRetry.ATLASFLUX_PURCHASE_URL,
       },
     })
   })
 
-  test("maps Go subscription limits to workspace PAYG upsell", () => {
+  test("maps AtlasFlux usage limits to billing", () => {
     const error = Schema.decodeUnknownSync(SessionV1.APIError.Schema)(
       new SessionV1.APIError({
         message: "Subscription quota exceeded. You can continue using free models.",
@@ -303,22 +303,22 @@ describe("session.retry.retryable", () => {
       }).toObject(),
     )
 
-    expect(SessionRetry.retryable(error, "opencode-go")).toEqual({
+    expect(SessionRetry.retryable(error, "atlasflux")).toEqual({
       message:
-        "5 hour usage limit reached. It will reset in 5 hours 23 minutes. To continue using this model now, enable usage from your available balance - https://opencode.ai/workspace/wrk_01K6XGM22R6FM8JVABE9XDQXGH/go",
+        "5 hour usage limit reached. It will reset in 5 hours 23 minutes. To continue using this model now, enable usage from your available balance - https://ai.atlasflux.my/account/billing",
       action: {
         reason: "account_rate_limit",
-        provider: "opencode-go",
-        title: "Go limit reached",
+        provider: "atlasflux",
+        title: "AtlasFlux limit reached",
         message:
           "5 hour usage limit reached. It will reset in 5 hours 23 minutes. To continue using this model now, enable usage from your available balance",
-        label: "open settings",
-        link: "https://opencode.ai/workspace/wrk_01K6XGM22R6FM8JVABE9XDQXGH/go",
+        label: "open billing",
+        link: "https://ai.atlasflux.my/account/billing",
       },
     })
   })
 
-  test("maps Go subscription limits without limit metadata", () => {
+  test("maps AtlasFlux usage limits without limit metadata", () => {
     const error = Schema.decodeUnknownSync(SessionV1.APIError.Schema)(
       new SessionV1.APIError({
         message: "Subscription quota exceeded. You can continue using free models.",
@@ -340,8 +340,8 @@ describe("session.retry.retryable", () => {
       }).toObject(),
     )
 
-    expect(SessionRetry.retryable(error, "opencode-go")?.action?.message).toBe(
-      "Usage limit reached. It will reset in 15 minutes. To continue using this model now, enable usage from your available balance",
+    expect(SessionRetry.retryable(error, "atlasflux")?.action?.message).toBe(
+      "AtlasFlux usage limit reached. It will reset in 15 minutes. To continue using this model now, enable usage from your available balance",
     )
   })
 })

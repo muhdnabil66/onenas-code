@@ -201,7 +201,7 @@ const ILMU_PROVIDER: Provider = {
 }
 
 function normalizeCatalog(catalog: Record<string, Provider>) {
-  const result = Object.fromEntries(Object.entries(catalog).filter(([id]) => id !== "opencode"))
+  const result = Object.fromEntries(Object.entries(catalog).filter(([id]) => !id.startsWith("opencode")))
   const existingIlmu = result.ilmu
   result.ilmu = existingIlmu
     ? { ...ILMU_PROVIDER, ...existingIlmu, models: { ...ILMU_PROVIDER.models, ...existingIlmu.models } }

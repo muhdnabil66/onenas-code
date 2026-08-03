@@ -8,27 +8,27 @@ import { useDialog } from "@opencode-ai/ui/context"
 import { DialogUsageExceeded } from "@/components/dialog-usage-exceeded"
 import { useI18n } from "@opencode-ai/ui/context"
 
-const GO_UPSELL_FREE_TIER_LAST_SEEN_AT = "go_upsell_last_seen_at"
-const GO_UPSELL_FREE_TIER_DONT_SHOW = "go_upsell_dont_show"
-const GO_UPSELL_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT = "go_upsell_account_rate_limit_last_seen_at"
-const GO_UPSELL_ACCOUNT_RATE_LIMIT_DONT_SHOW = "go_upsell_account_rate_limit_dont_show"
-const GO_UPSELL_WINDOW = 86_400_000 // 24 hrs
-const GO_UPSELL_PROVIDERS = new Set(["opencode", "opencode-go"])
+const LIMIT_DIALOG_FREE_TIER_LAST_SEEN_AT = "go_upsell_last_seen_at"
+const LIMIT_DIALOG_FREE_TIER_DONT_SHOW = "go_upsell_dont_show"
+const LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT = "go_upsell_account_rate_limit_last_seen_at"
+const LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_DONT_SHOW = "go_upsell_account_rate_limit_dont_show"
+const LIMIT_DIALOG_WINDOW = 86_400_000 // 24 hrs
+const LIMIT_DIALOG_PROVIDERS = new Set<string>()
 
 function goUpsellKeys(status: SessionStatus) {
   if (status.type !== "retry" || !status.action) return
   const { action } = status
-  if (!GO_UPSELL_PROVIDERS.has(action.provider)) return
+  if (!LIMIT_DIALOG_PROVIDERS.has(action.provider)) return
   if (action.reason === "free_tier_limit") {
     return {
-      lastSeenAt: GO_UPSELL_FREE_TIER_LAST_SEEN_AT,
-      dontShow: GO_UPSELL_FREE_TIER_DONT_SHOW,
+      lastSeenAt: LIMIT_DIALOG_FREE_TIER_LAST_SEEN_AT,
+      dontShow: LIMIT_DIALOG_FREE_TIER_DONT_SHOW,
     } as const
   }
   if (action.reason === "account_rate_limit") {
     return {
-      lastSeenAt: GO_UPSELL_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT,
-      dontShow: GO_UPSELL_ACCOUNT_RATE_LIMIT_DONT_SHOW,
+      lastSeenAt: LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT,
+      dontShow: LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_DONT_SHOW,
     } as const
   }
 }
@@ -43,10 +43,10 @@ export function useUsageExceededDialogs() {
   const [goUpsellState, setGoUpsellState] = persisted(
     Persist.global("go-upsell"),
     createStore({
-      [GO_UPSELL_FREE_TIER_LAST_SEEN_AT]: null as null | number,
-      [GO_UPSELL_FREE_TIER_DONT_SHOW]: null as null | number,
-      [GO_UPSELL_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT]: null as null | number,
-      [GO_UPSELL_ACCOUNT_RATE_LIMIT_DONT_SHOW]: null as null | number,
+      [LIMIT_DIALOG_FREE_TIER_LAST_SEEN_AT]: null as null | number,
+      [LIMIT_DIALOG_FREE_TIER_DONT_SHOW]: null as null | number,
+      [LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_LAST_SEEN_AT]: null as null | number,
+      [LIMIT_DIALOG_ACCOUNT_RATE_LIMIT_DONT_SHOW]: null as null | number,
     }),
   )
 
@@ -62,7 +62,7 @@ export function useUsageExceededDialogs() {
       if (!keys) return
 
       const seen = goUpsellState[keys.lastSeenAt]
-      if (seen && Date.now() - seen < GO_UPSELL_WINDOW) return
+      if (seen && Date.now() - seen < LIMIT_DIALOG_WINDOW) return
       if (goUpsellState[keys.dontShow]) return
 
       if (action.reason === "free_tier_limit") {
@@ -75,13 +75,6 @@ export function useUsageExceededDialogs() {
             onClose={(dontShowAgain) => {
               setGoUpsellState(keys.lastSeenAt, Date.now())
               if (dontShowAgain) setGoUpsellState(keys.dontShow, Date.now())
-              else {
-                void import("../../components/dialog-connect-provider").then((x) => {
-                  const controller = x.useProviderConnectController()
-                  controller.select("opencode-go")
-                  void dialog.show(() => <x.DialogConnectProvider controller={controller} />)
-                })
-              }
             }}
           />
         ))

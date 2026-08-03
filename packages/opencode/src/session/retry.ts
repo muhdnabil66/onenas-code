@@ -7,8 +7,8 @@ import { isRecord } from "@/util/record"
 
 export type Err = ReturnType<NamedError["toObject"]>
 
-export const GO_UPSELL_MESSAGE = "Free usage exceeded"
-export const GO_UPSELL_URL = "https://onenas.atlasflux.my"
+export const ATLASFLUX_ACCESS_MESSAGE = "AtlasFlux access required"
+export const ATLASFLUX_PURCHASE_URL = "https://ai.atlasflux.my/purchase"
 export type RetryReason = "free_tier_limit" | "account_rate_limit" | (string & {})
 
 export type Retryable = {
@@ -75,20 +75,19 @@ export function retryable(error: Err, provider: string) {
     if (!error.data.isRetryable && !(status !== undefined && status >= 500)) return undefined
     if (error.data.responseBody?.includes("FreeUsageLimitError")) {
       return {
-        message: GO_UPSELL_MESSAGE,
+        message: ATLASFLUX_ACCESS_MESSAGE,
         action: {
           reason: "free_tier_limit",
           provider,
-          title: "Free limit reached",
-          message: "Subscribe to ONeNas Go for reliable access to the best open-source models, starting at $5/month.",
-          label: "subscribe",
-          link: GO_UPSELL_URL,
+          title: "AtlasFlux access required",
+          message: "Upgrade to AtlasFlux Pro or add Credits from the AtlasFlux billing page.",
+          label: "open billing",
+          link: ATLASFLUX_PURCHASE_URL,
         },
       }
     }
     if (error.data.responseBody?.includes("GoUsageLimitError")) {
       const body = parseJSON(error.data.responseBody)
-      const workspace = str(body?.metadata?.workspace)
       const limitName = str(body?.metadata?.limitName)
       const retryAfter = num(error.data.responseHeaders?.["retry-after"])
       const resetIn = iife(() => {
@@ -104,17 +103,18 @@ export function retryable(error: Err, provider: string) {
         return minutes > 0 ? unit(minutes, "minute") : "less than a minute"
       })
 
-      const message = `${limitName ? `${limitName} usage limit` : "Usage limit"} reached. It will reset in ${resetIn}. To continue using this model now, enable usage from your available balance`
+      const displayLimitName = limitName && limitName.toLowerCase() !== "go" ? limitName : "AtlasFlux"
+      const message = `${displayLimitName} usage limit reached. It will reset in ${resetIn}. To continue using this model now, enable usage from your available balance`
 
-      const link = `https://onenas.atlasflux.my/workspace/${workspace}/go`
+      const link = "https://ai.atlasflux.my/account/billing"
       return {
         message: `${message} - ${link}`,
         action: {
           reason: "account_rate_limit",
           provider,
-          title: "Go limit reached",
+          title: "AtlasFlux limit reached",
           message,
-          label: "open settings",
+          label: "open billing",
           link,
         },
       }
