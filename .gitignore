@@ -35,3 +35,4 @@ tsconfig.tsbuildinfo
 
 # Bundled binaries (downloaded by postinstall)
 packages/onenas-cli/resources/
+.vercel
