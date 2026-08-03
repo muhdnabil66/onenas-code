@@ -1,31 +1,97 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Complete ONeNas Code documentation."><title>Docs — ONeNas Code</title><link rel="stylesheet" href="/style.css"><script src="/script.js" defer></script></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Complete ONeNas Code documentation." />
+    <title>Docs — ONeNas Code</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/script.js" defer></script>
+  </head>
   <body>
-    <nav><a class="brand" href="/">ONeNas <span>Code</span></a><div class="links"><a href="/docs/">Docs</a><a href="/releases/">Releases</a><a class="button" href="/download/">Download</a></div></nav>
+    <nav>
+      <a class="brand" href="/">ONeNas <span>Code</span></a>
+      <div class="links">
+        <a href="/docs/">Docs</a><a href="/releases/">Releases</a><a class="button" href="/download/">Download</a>
+      </div>
+    </nav>
     <main class="content">
       <div class="eyebrow">Documentation</div>
       <h1>Build locally with AtlasFlux intelligence.</h1>
-      <p>ONeNas Code is a local-first coding agent. Your terminal, project files and tool execution stay on your computer while AtlasFlux AI provides identity, model access, policy and account credits.</p>
+      <p>
+        ONeNas Code is a local-first coding agent. Your terminal, project files and tool execution stay on your computer
+        while AtlasFlux AI provides identity, model access, policy and account credits.
+      </p>
 
       <h2>Install</h2>
       <p>Install the latest CLI globally with npm:</p>
-      <div class="install"><code>npm i -g onenas-code</code><button class="copy-button" type="button" data-copy="npm i -g onenas-code">Copy</button></div>
+      <div class="install">
+        <code>npm i -g onenas-code</code
+        ><button class="copy-button" type="button" data-copy="npm i -g onenas-code">Copy</button>
+      </div>
       <p>Start it from any project folder:</p>
       <pre><code>cd path/to/your-project
 onenas</code></pre>
-      <p>On first launch, a browser window opens for AtlasFlux authorization. After login, return to the terminal and ONeNas Code starts the agent.</p>
+      <p>
+        On first launch, a browser window opens for AtlasFlux authorization. After login, return to the terminal and
+        ONeNas Code starts the agent.
+      </p>
 
       <h2>Core Features</h2>
       <div class="feature-grid">
-        <article class="feature"><h3>Local workspace</h3><p>Open any folder and let the agent read files, edit code, inspect diffs and run commands directly in that workspace.</p></article>
-        <article class="feature"><h3>Agent workflows</h3><p>Use planning, implementation, review, subagents, task tracking and automatic context management for multi-step work.</p></article>
-        <article class="feature"><h3>Terminal tools</h3><p>Run shell commands with permission controls, inspect output, and keep command activity visible in the session timeline.</p></article>
-        <article class="feature"><h3>Git-aware sessions</h3><p>Review changes, inspect branches and diffs, create commits, work with pull requests and keep coding sessions organized.</p></article>
-        <article class="feature"><h3>MCP and skills</h3><p>Connect MCP servers and install reusable skills or commands to extend the agent with project-specific workflows.</p></article>
-        <article class="feature"><h3>LSP and formatters</h3><p>Use configured language servers and formatters for navigation, diagnostics, symbol search and consistent code style.</p></article>
-        <article class="feature"><h3>Sessions and resume</h3><p>Continue previous sessions, switch projects, inspect history and recover context without leaving your local workspace.</p></article>
-        <article class="feature"><h3>Desktop and CLI</h3><p>Use the Windows desktop experience or the npm CLI against the same local-first ONeNas Code workflow.</p></article>
+        <article class="feature">
+          <h3>Local workspace</h3>
+          <p>
+            Open any folder and let the agent read files, edit code, inspect diffs and run commands directly in that
+            workspace.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>Agent workflows</h3>
+          <p>
+            Use planning, implementation, review, subagents, task tracking and automatic context management for
+            multi-step work.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>Terminal tools</h3>
+          <p>
+            Run shell commands with permission controls, inspect output, and keep command activity visible in the
+            session timeline.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>Git-aware sessions</h3>
+          <p>
+            Review changes, inspect branches and diffs, create commits, work with pull requests and keep coding sessions
+            organized.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>MCP and skills</h3>
+          <p>
+            Connect MCP servers and install reusable skills or commands to extend the agent with project-specific
+            workflows.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>LSP and formatters</h3>
+          <p>
+            Use configured language servers and formatters for navigation, diagnostics, symbol search and consistent
+            code style.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>Sessions and resume</h3>
+          <p>
+            Continue previous sessions, switch projects, inspect history and recover context without leaving your local
+            workspace.
+          </p>
+        </article>
+        <article class="feature">
+          <h3>Desktop and CLI</h3>
+          <p>Use the Windows desktop experience or the npm CLI against the same local-first ONeNas Code workflow.</p>
+        </article>
       </div>
 
       <h2>AtlasFlux Account</h2>
@@ -41,33 +107,87 @@ onenas logout      # Remove the local AtlasFlux session</code></pre>
 /sync</code></pre>
 
       <h2>Providers and Models</h2>
-      <p>AtlasFlux is the default provider for ONeNas Code. The provider catalog also supports direct connections to configured providers such as OpenAI, Anthropic, Google, OpenRouter, xAI, Groq, Mistral, NVIDIA, GitHub Copilot and many others.</p>
-      <p>The removed <code>opencode</code> provider and its hosted infrastructure are not part of ONeNas Code. Direct provider connections use the provider's own API endpoint and credentials.</p>
+      <p>
+        AtlasFlux is the default provider for ONeNas Code. The provider catalog also supports direct connections to
+        configured providers such as OpenAI, Anthropic, Google, OpenRouter, xAI, Groq, Mistral, NVIDIA, GitHub Copilot
+        and many others.
+      </p>
+      <p>
+        The removed <code>opencode</code> provider and its hosted infrastructure are not part of ONeNas Code. Direct
+        provider connections use the provider's own API endpoint and credentials.
+      </p>
       <h3>ILMU API</h3>
-      <p>ILMU is available as an OpenAI-compatible provider hosted by YTL AI Labs in Malaysia. Configure its API key before selecting an ILMU model:</p>
+      <p>
+        ILMU is available as an OpenAI-compatible provider hosted by YTL AI Labs in Malaysia. Configure its API key
+        before selecting an ILMU model:
+      </p>
       <pre><code>$env:ILMU_API_KEY = "sk-your-ilmu-key"
 onenas</code></pre>
-      <p>Start the TUI, open the model picker, and choose an ILMU model. The CLI <code>onenas models</code> command shows AtlasFlux-managed account models; configured third-party providers are selected from the TUI model picker.</p>
-      <p>ILMU uses <code>https://api.ilmu.ai/v1</code> and includes models such as <code>ilmu-v3.1</code>, <code>ilmu-mini-v3.3</code>, <code>nemo-super</code> and <code>ilmu-nemo-nano</code>.</p>
+      <p>
+        Start the TUI, open the model picker, and choose an ILMU model. The CLI <code>onenas models</code> command shows
+        AtlasFlux-managed account models; configured third-party providers are selected from the TUI model picker.
+      </p>
+      <p>
+        ILMU uses <code>https://api.ilmu.ai/v1</code> and includes models such as <code>ilmu-v3.1</code>,
+        <code>ilmu-mini-v3.3</code>, <code>nemo-super</code> and <code>ilmu-nemo-nano</code>.
+      </p>
 
       <h2>Themes</h2>
       <p>Open the theme picker from the TUI with the theme shortcut, then select:</p>
-      <ul><li><strong>onenes alpha</strong> - red theme using <code>#FF3333</code>, enabled by default.</li><li><strong>onenes myra</strong> - pink theme using <code>#FF1493</code>.</li></ul>
-      <p>Each ONeNas theme defines the complete interface palette: background, panels, text, borders, status colors, diffs, markdown and syntax highlighting.</p>
+      <ul>
+        <li><strong>onenas alpha</strong> - red theme using <code>#FF3333</code>, enabled by default.</li>
+        <li><strong>onenas myra</strong> - pink theme using <code>#FF1493</code>.</li>
+      </ul>
+      <p>
+        Each ONeNas theme defines the complete interface palette: background, panels, text, borders, status colors,
+        diffs, markdown and syntax highlighting.
+      </p>
 
       <h2>Configuration</h2>
-      <p>ONeNas Code supports <code>onenes.json</code> and <code>onenes.jsonc</code>. Existing <code>opencode.json</code> files remain readable for migration. The TUI looks for local configuration and commands in the project folder and global configuration under the ONeNas data directories.</p>
-      <p>Provider credentials can be supplied through environment variables, the provider login flow, or provider configuration. Keep API keys out of source control.</p>
+      <p>
+        ONeNas Code supports <code>onenas.json</code> and <code>onenas.jsonc</code>. Existing
+        <code>opencode.json</code> files remain readable for migration. The TUI looks for local configuration and
+        commands in the project folder and global configuration under the ONeNas data directories.
+      </p>
+      <p>
+        Provider credentials can be supplied through environment variables, the provider login flow, or provider
+        configuration. Keep API keys out of source control.
+      </p>
 
       <h2>Privacy Boundary</h2>
-      <p>Project files, terminal execution and local sessions remain on the machine. AtlasFlux handles authentication, model routing, policy and credits. Prompts and assistant responses may be sent to the selected model provider so the agent can answer; provider privacy policies and your configuration determine the external processing boundary.</p>
-      <p>When AtlasFlux is unavailable, local files and existing sessions remain inspectable, but new AtlasFlux-managed AI runs cannot start.</p>
+      <p>
+        Project files, terminal execution and local sessions remain on the machine. AtlasFlux handles authentication,
+        model routing, policy and credits. Prompts and assistant responses may be sent to the selected model provider so
+        the agent can answer; provider privacy policies and your configuration determine the external processing
+        boundary.
+      </p>
+      <p>
+        When AtlasFlux is unavailable, local files and existing sessions remain inspectable, but new AtlasFlux-managed
+        AI runs cannot start.
+      </p>
 
       <h2>Troubleshooting</h2>
-      <ul><li><strong>Browser login does not open:</strong> run <code>onenas login</code> again and use the printed authorization URL as a fallback.</li><li><strong>Provider is not listed:</strong> configure its API key, then restart ONeNas Code and run <code>onenas models &lt;provider&gt;</code>.</li><li><strong>AtlasFlux token expired:</strong> run <code>onenas login</code> to authorize again.</li><li><strong>Wrong default model:</strong> select an AtlasFlux model in the model picker or keep the managed AtlasFlux configuration enabled.</li></ul>
+      <ul>
+        <li>
+          <strong>Browser login does not open:</strong> run <code>onenas login</code> again and use the printed
+          authorization URL as a fallback.
+        </li>
+        <li>
+          <strong>Provider is not listed:</strong> configure its API key, then restart ONeNas Code and run
+          <code>onenas models &lt;provider&gt;</code>.
+        </li>
+        <li><strong>AtlasFlux token expired:</strong> run <code>onenas login</code> to authorize again.</li>
+        <li>
+          <strong>Wrong default model:</strong> select an AtlasFlux model in the model picker or keep the managed
+          AtlasFlux configuration enabled.
+        </li>
+      </ul>
 
       <h2 id="third-party-notices">License and Notices</h2>
-      <p>ONeNas Code includes software derived from OpenCode, Copyright (c) 2025 Anomaly Innovations Inc. and contributors, used under the MIT License. Original license and third-party notices ship with the application.</p>
+      <p>
+        ONeNas Code includes software derived from OpenCode, Copyright (c) 2025 Anomaly Innovations Inc. and
+        contributors, used under the MIT License. Original license and third-party notices ship with the application.
+      </p>
     </main>
     <footer>Account, models and billing are managed at ai.atlasflux.my.</footer>
   </body>
