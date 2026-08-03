@@ -28,10 +28,10 @@ const docsCliHref = getRelativeLocaleUrl(locale, "cli")
 const docsIdeHref = getRelativeLocaleUrl(locale, "ide")
 const docsGithubHref = getRelativeLocaleUrl(locale, "github")
 
-const command = "curl -fsSL"
-const protocol = "https://"
-const url = "opencode.ai/install"
-const bash = "| bash"
+const command = "npm i -g"
+const protocol = ""
+const url = "onenas-code"
+const bash = ""
 
 let darkImage: ImageMetadata | undefined;
 let lightImage: ImageMetadata | undefined;
@@ -67,9 +67,9 @@ if (image) {
         <a href={docsHref}>{t('app.lander.cta.getStarted')}</a>
       </div>
       <div class="col2">
-      <button class="command" data-command={`${command} ${protocol}${url} ${bash}`}>
+      <button class="command" data-command={`${command} ${url}`}>
           <code>
-            <span>{command}&nbsp;</span><span class="protocol">{protocol}</span><span class="highlight">{url}</span>&nbsp;{bash}
+            <span>{command}</span> <span class="highlight">{url}</span>
           </code>
           <span class="copy">
             <CopyIcon />
@@ -94,9 +94,9 @@ if (image) {
     <section class="alternatives">
       <div class="col1">
         <h3>npm</h3>
-        <button class="command" data-command="npm install -g opencode-ai">
+        <button class="command" data-command="npm i -g onenas-code">
           <code>
-            <span>npm install -g</span> <span class="highlight">opencode-ai</span>
+            <span>npm i -g</span> <span class="highlight">onenas-code</span>
           </code>
           <span class="copy">
             <CopyIcon />
@@ -106,9 +106,9 @@ if (image) {
       </div>
       <div class="col2">
         <h3>Bun</h3>
-        <button class="command" data-command="bun install -g opencode-ai">
+        <button class="command" data-command="bun i -g onenas-code">
           <code>
-            <span>bun install -g</span> <span class="highlight">opencode-ai</span>
+            <span>bun i -g</span> <span class="highlight">onenas-code</span>
           </code>
           <span class="copy">
             <CopyIcon />
@@ -117,34 +117,18 @@ if (image) {
         </button>
       </div>
       <div class="col3">
-        <h3>Homebrew</h3>
-        <button class="command" data-command="brew install opencode">
+        <h3>Desktop</h3>
+        <a href="/desktop/download" class="command" style="text-decoration:none">
           <code>
-            <span>brew install</span> <span class="highlight">opencode</span>
+            <span>Download</span> <span class="highlight">Desktop App</span>
           </code>
-          <span class="copy">
-            <CopyIcon />
-            <CheckIcon />
-          </span>
-        </button>
+        </a>
       </div>
       <div class="col4">
-        <h3>Paru</h3>
-        <button class="command" data-command="paru -S opencode-bin">
+        <h3>Run</h3>
+        <button class="command" data-command="onenas">
           <code>
-            <span>paru -S</span> <span class="highlight">opencode-bin</span>
-          </code>
-          <span class="copy">
-            <CopyIcon />
-            <CheckIcon />
-          </span>
-        </button>
-      </div>
-      <div class="col4">
-        <h3>Mise</h3>
-        <button class="command" data-command="mise use -g github:anomalyco/opencode">
-          <code>
-            <span>mise use -g</span> <span class="highlight">github:anomalyco/opencode</span>
+            <span class="highlight">onenas</span>
           </code>
           <span class="copy">
             <CopyIcon />
@@ -191,7 +175,7 @@ if (image) {
         <a href={discord.href} target="_blank" rel="noopener noreferrer">Discord</a>
       </div>
       <div class="col3">
-      <span>&copy;2025 <a href="https://anoma.ly" target="_blank" rel="noopener noreferrer">Anomaly Innovations</a></span>
+      <span>&copy;2025 <a href="https://atlasflux.my" target="_blank" rel="noopener noreferrer">AtlasFlux</a></span>
       </div>
     </section>
 </div>

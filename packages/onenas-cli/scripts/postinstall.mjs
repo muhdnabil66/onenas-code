@@ -15,7 +15,13 @@ const ASSET = `onenas-code-${OS}-${ARCH}${EXE}`
 const DEST_DIR = path.join(pkgRoot, "resources")
 const DEST = path.join(DEST_DIR, `opencode${EXE}`)
 
+const CI = process.env.CI === "true" || process.env.CI === "1"
+
 async function main() {
+  if (process.env.ONENAS_SKIP_BINARY || CI) {
+    console.log(`onenas-code: skipping binary download${CI ? " (CI detected)" : ""}`)
+    return
+  }
   if (fs.existsSync(DEST) && fs.statSync(DEST).size > 10 * 1024 * 1024) {
     console.log(`onenas-code: binary already present (${Math.round(fs.statSync(DEST).size / 1024 / 1024)}MB), skipping download`)
     return
@@ -24,9 +30,9 @@ async function main() {
   console.log(`onenas-code: downloading binary from ${url}`)
   const response = await fetch(url, { redirect: "follow" })
   if (!response.ok) {
-    console.error(`onenas-code: failed to download binary (${response.status} ${response.statusText})`)
-    console.error(`onenas-code: download manually from ${url} and place at ${DEST}`)
-    process.exit(1)
+    console.warn(`onenas-code: no binary available for ${OS}-${ARCH} (${response.status} ${response.statusText})`)
+    console.warn(`onenas-code: download manually from ${url} and place at ${DEST}`)
+    return
   }
   fs.mkdirSync(DEST_DIR, { recursive: true })
   const buffer = Buffer.from(await response.arrayBuffer())
@@ -37,5 +43,5 @@ async function main() {
 
 main().catch((error) => {
   console.error(`onenas-code: postinstall failed: ${error.message}`)
-  process.exit(1)
+  if (!CI) process.exit(1)
 })
