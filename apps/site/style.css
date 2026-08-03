@@ -22,15 +22,27 @@ h1 { margin: 18px 0; font-size: clamp(48px, 8vw, 88px); line-height: .98; letter
 h2 { font-size: clamp(30px, 4vw, 48px); letter-spacing: -.04em; }
 p { color: #aeb8c8; font-size: 18px; line-height: 1.7; }
 .actions { display: flex; gap: 12px; margin-top: 34px; flex-wrap: wrap; }
-.install { margin-top: 24px; display: inline-block; }
-.install code { background: #ffffff0d; border: 1px solid #ffffff1f; padding: 12px 20px; border-radius: 10px; font-size: 18px; font-weight: 600; letter-spacing: -.02em; cursor: pointer; user-select: all; }
-.install code:hover { background: #ffffff14; }
+.install { margin-top: 24px; display: inline-flex; align-items: center; gap: 10px; padding: 7px 7px 7px 18px; background: #ffffff0d; border: 1px solid #ffffff1f; border-radius: 12px; }
+.install code { font-size: 18px; font-weight: 600; letter-spacing: -.02em; user-select: all; }
+.copy-button { border: 1px solid #ffffff1f; border-radius: 8px; padding: 8px 12px; color: #f5f7fa; background: #ffffff12; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.copy-button:hover, .copy-button.copied { background: #78aaff; color: #07090d; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 90px; }
 .card { padding: 24px; border: 1px solid #ffffff18; border-radius: 16px; background: #ffffff08; }
 .card h3 { margin-top: 0; }
 .card p { font-size: 15px; margin-bottom: 0; }
 .content { max-width: 780px; padding: 72px 0 100px; }
 .content code { background: #ffffff12; padding: 2px 6px; border-radius: 5px; }
+.content .install { margin-bottom: 22px; }
+.content h2 { margin-top: 54px; }
+.content h3 { margin-top: 32px; color: #f5f7fa; }
+.content ul, .content ol { padding-left: 24px; color: #aeb8c8; font-size: 17px; line-height: 1.75; }
+.content li + li { margin-top: 8px; }
+.content pre { overflow-x: auto; padding: 18px; border: 1px solid #ffffff18; border-radius: 12px; background: #05060a; color: #dce5f5; line-height: 1.6; }
+.content pre code { padding: 0; background: transparent; }
+.content .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.content .feature { padding: 18px; border: 1px solid #ffffff18; border-radius: 12px; background: #ffffff08; }
+.content .feature h3 { margin: 0 0 8px; }
+.content .feature p { margin: 0; font-size: 15px; }
 .notice { border-left: 3px solid #78aaff; padding: 14px 18px; background: #78aaff12; }
 footer { padding: 28px 0 40px; border-top: 1px solid #ffffff18; color: #788398; font-size: 13px; }
-@media (max-width: 720px) { .links a:not(.button) { display: none; } .grid { grid-template-columns: 1fr; } .hero { padding-top: 72px; } }
+@media (max-width: 720px) { .links a:not(.button) { display: none; } .grid, .content .feature-grid { grid-template-columns: 1fr; } .hero { padding-top: 72px; } .install { max-width: 100%; } .install code { overflow-x: auto; font-size: 14px; } }

@@ -10,6 +10,7 @@ await mkdir(output, { recursive: true })
 await Promise.all([
   cp(resolve(root, "index.html"), resolve(output, "index.html")),
   cp(resolve(root, "style.css"), resolve(output, "style.css")),
+  cp(resolve(root, "script.js"), resolve(output, "script.js")),
   ...["download", "releases", "docs"].map((route) =>
     cp(resolve(root, route), resolve(output, route), { recursive: true }),
   ),

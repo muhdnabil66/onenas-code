@@ -21,7 +21,6 @@ import monokai from "./assets/monokai.json" with { type: "json" }
 import nightowl from "./assets/nightowl.json" with { type: "json" }
 import nord from "./assets/nord.json" with { type: "json" }
 import onedark from "./assets/one-dark.json" with { type: "json" }
-import opencode from "./assets/opencode.json" with { type: "json" }
 import orng from "./assets/orng.json" with { type: "json" }
 import osakaJade from "./assets/osaka-jade.json" with { type: "json" }
 import palenight from "./assets/palenight.json" with { type: "json" }
@@ -127,25 +126,130 @@ export type ThemeJson = {
   }
 }
 
-function onenasTheme(primary: HexColor): ThemeJson {
+function themeMode(dark: HexColor, light: HexColor): Variant {
+  return { dark, light }
+}
+
+function onenasTheme(
+  primary: HexColor,
+  secondary: HexColor,
+  colors: {
+    darkBackground: HexColor
+    darkPanel: HexColor
+    darkElement: HexColor
+    darkMenu: HexColor
+    darkText: HexColor
+    darkMuted: HexColor
+    lightBackground: HexColor
+    lightPanel: HexColor
+    lightElement: HexColor
+    lightMenu: HexColor
+    lightText: HexColor
+    lightMuted: HexColor
+  },
+): ThemeJson {
+  const bg = themeMode(colors.darkBackground, colors.lightBackground)
+  const panel = themeMode(colors.darkPanel, colors.lightPanel)
+  const element = themeMode(colors.darkElement, colors.lightElement)
+  const menu = themeMode(colors.darkMenu, colors.lightMenu)
+  const text = themeMode(colors.darkText, colors.lightText)
+  const muted = themeMode(colors.darkMuted, colors.lightMuted)
+  const error = themeMode("#FF6B6B", "#C91524")
+  const warning = themeMode("#FFB347", "#A65B00")
+  const success = themeMode("#75E6A5", "#16834A")
+  const info = themeMode(secondary, secondary)
+  const subtle = themeMode("#64252D", "#EAB6BA")
+  const diffAddedBg = themeMode("#173A2B", "#DDF7E9")
+  const diffRemovedBg = themeMode("#451C25", "#FFE1E5")
+
   return {
-    ...opencode,
+    ...orng,
     theme: {
-      ...opencode.theme,
+      ...orng.theme,
       primary,
+      secondary,
       accent: primary,
-      border: primary,
-      borderActive: primary,
+      error,
+      warning,
+      success,
+      info,
+      text,
+      textMuted: muted,
+      selectedListItemText: bg,
+      background: bg,
+      backgroundPanel: panel,
+      backgroundElement: element,
+      backgroundMenu: menu,
+      border: themeMode(primary, primary),
+      borderActive: themeMode(secondary, primary),
+      borderSubtle: subtle,
+      diffAdded: success,
+      diffRemoved: error,
+      diffContext: muted,
+      diffHunkHeader: secondary,
+      diffHighlightAdded: success,
+      diffHighlightRemoved: error,
+      diffAddedBg,
+      diffRemovedBg,
+      diffContextBg: panel,
+      diffLineNumber: muted,
+      diffAddedLineNumberBg: themeMode("#214B37", "#C8EED8"),
+      diffRemovedLineNumberBg: themeMode("#57232E", "#F5C9CE"),
+      markdownText: text,
       markdownHeading: primary,
       markdownLink: primary,
+      markdownLinkText: secondary,
+      markdownCode: success,
+      markdownBlockQuote: warning,
+      markdownEmph: warning,
+      markdownStrong: secondary,
+      markdownHorizontalRule: subtle,
       markdownListItem: primary,
+      markdownListEnumeration: secondary,
+      markdownImage: primary,
+      markdownImageText: secondary,
+      markdownCodeBlock: text,
+      syntaxComment: muted,
+      syntaxKeyword: secondary,
       syntaxFunction: primary,
+      syntaxVariable: text,
+      syntaxString: success,
+      syntaxNumber: warning,
+      syntaxType: secondary,
+      syntaxOperator: primary,
+      syntaxPunctuation: text,
     },
   }
 }
 
-const onenasAlpha = onenasTheme("#FF3333")
-const onenasMyra = onenasTheme("#FF1493")
+const onenasAlpha = onenasTheme("#FF3333", "#FF7777", {
+  darkBackground: "#100608",
+  darkPanel: "#1A090B",
+  darkElement: "#260D10",
+  darkMenu: "#311116",
+  darkText: "#FFEDEE",
+  darkMuted: "#B98F94",
+  lightBackground: "#FFF7F7",
+  lightPanel: "#FFEAEA",
+  lightElement: "#FFDDDD",
+  lightMenu: "#FFF0F0",
+  lightText: "#26090C",
+  lightMuted: "#7F4A50",
+})
+const onenasMyra = onenasTheme("#FF1493", "#FF7AC8", {
+  darkBackground: "#10060E",
+  darkPanel: "#1C0918",
+  darkElement: "#2A0E24",
+  darkMenu: "#37132F",
+  darkText: "#FFF0FA",
+  darkMuted: "#C39AB6",
+  lightBackground: "#FFF7FC",
+  lightPanel: "#FFEAF6",
+  lightElement: "#FFDDF0",
+  lightMenu: "#FFF0F8",
+  lightText: "#2A0B1F",
+  lightMuted: "#87536F",
+})
 
 export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   aura,
@@ -169,7 +273,6 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   nord,
   ["one-dark"]: onedark,
   ["osaka-jade"]: osakaJade,
-  opencode,
   orng,
   ["lucent-orng"]: lucentOrng,
   palenight,
