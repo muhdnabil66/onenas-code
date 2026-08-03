@@ -1,0 +1,21 @@
+{
+  "name": "onenas-code",
+  "version": "0.1.0",
+  "description": "ONeNas Code by AtlasFlux - AI coding agent CLI",
+  "type": "module",
+  "bin": {
+    "onenas": "./bin/onenas"
+  },
+  "scripts": {
+    "dev": "node --import tsx src/index.ts",
+    "build": "node scripts/build.mjs",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "open": "^10.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
