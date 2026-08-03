@@ -8,7 +8,7 @@ import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.1.0"
+const VERSION = "0.2.1"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const REDIRECT_PORT = 43210
@@ -322,6 +322,8 @@ async function main() {
   const command = process.argv[2]
 
   if (command === "help" || command === "--help" || command === "-h") { showHelp(); return }
+
+  if (command === "--version" || command === "-v") { console.log(VERSION); return }
 
   if (command === "logout") { clearTokens(); console.log("\n  Signed out.\n"); return }
 
