@@ -135,6 +135,80 @@ export const Event = ModelsDev.Event
 
 declare const OPENCODE_MODELS_DEV: Record<string, Provider> | undefined
 
+const ILMU_PROVIDER: Provider = {
+  id: "ilmu",
+  name: "ILMU API",
+  env: ["ILMU_API_KEY"],
+  api: "https://api.ilmu.ai/v1",
+  npm: "@ai-sdk/openai-compatible",
+  models: {
+    "ilmu-v3.1": {
+      id: "ilmu-v3.1",
+      name: "ILMU v3.1",
+      release_date: "2026-01-01",
+      attachment: true,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      modalities: { input: ["text", "image"], output: ["text"] },
+      limit: { context: 200000, output: 128000 },
+    },
+    "ilmu-mini-v3.3": {
+      id: "ilmu-mini-v3.3",
+      name: "ILMU Mini v3.3",
+      release_date: "2026-01-01",
+      attachment: true,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      modalities: { input: ["text", "image"], output: ["text"] },
+      limit: { context: 200000, output: 128000 },
+    },
+    "nemo-super": {
+      id: "nemo-super",
+      name: "Nemo Super",
+      release_date: "2026-01-01",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      modalities: { input: ["text"], output: ["text"] },
+      limit: { context: 256000, output: 128000 },
+    },
+    "ilmu-nemo-nano": {
+      id: "ilmu-nemo-nano",
+      name: "ILMU Nemo Nano",
+      release_date: "2026-01-01",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      modalities: { input: ["text"], output: ["text"] },
+      limit: { context: 256000, output: 128000 },
+    },
+    "ilmu-vision-v1.3": {
+      id: "ilmu-vision-v1.3",
+      name: "ILMU Vision v1.3",
+      release_date: "2026-01-01",
+      attachment: true,
+      reasoning: false,
+      temperature: true,
+      tool_call: false,
+      modalities: { input: ["text", "image"], output: ["text"] },
+      limit: { context: 128000, output: 8192 },
+    },
+  },
+}
+
+function normalizeCatalog(catalog: Record<string, Provider>) {
+  const result = Object.fromEntries(Object.entries(catalog).filter(([id]) => id !== "opencode"))
+  const existingIlmu = result.ilmu
+  result.ilmu = existingIlmu
+    ? { ...ILMU_PROVIDER, ...existingIlmu, models: { ...ILMU_PROVIDER.models, ...existingIlmu.models } }
+    : ILMU_PROVIDER
+  return result
+}
+
 export interface Interface {
   readonly get: () => Effect.Effect<Record<string, Provider>>
   readonly refresh: (force?: boolean) => Effect.Effect<void>
@@ -157,8 +231,8 @@ const layer = Layer.effect(
       ),
     )
 
-    const source = Flag.OPENCODE_MODELS_URL
-    if (!source) return Service.of({ get: () => Effect.succeed({}), refresh: () => Effect.succeed(undefined) })
+    // The catalog is hosted by models.dev, not by the removed OpenCode backend.
+    const source = "https://models.dev"
     const filepath = path.join(Global.Path.cache, `models-${Hash.fast(source)}.json`)
     const ttl = Duration.minutes(5)
     const lockKey = `models-dev:${filepath}`
@@ -214,10 +288,10 @@ const layer = Layer.effect(
 
     const populate = Effect.gen(function* () {
       const fromDisk = yield* loadFromDisk
-      if (fromDisk) return fromDisk
+      if (fromDisk) return normalizeCatalog(fromDisk)
       const snapshot = yield* loadSnapshot
-      if (snapshot) return snapshot
-      if (Flag.OPENCODE_DISABLE_MODELS_FETCH) return {}
+      if (snapshot) return normalizeCatalog(snapshot)
+      if (Flag.OPENCODE_DISABLE_MODELS_FETCH) return normalizeCatalog({})
       // Flock is cross-process: concurrent opencode CLIs can race on this cache file.
       const text = yield* Effect.scoped(
         Effect.gen(function* () {
@@ -225,7 +299,7 @@ const layer = Layer.effect(
           return yield* fetchAndWrite()
         }),
       )
-      return JSON.parse(text) as Record<string, Provider>
+      return normalizeCatalog(JSON.parse(text) as Record<string, Provider>)
     }).pipe(Effect.withSpan("ModelsDev.populate"), Effect.orDie)
 
     const [cachedGet, invalidate] = yield* Effect.cachedInvalidateWithTTL(populate, Duration.infinity)

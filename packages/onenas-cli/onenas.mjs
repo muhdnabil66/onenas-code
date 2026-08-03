@@ -4,11 +4,11 @@ import http from "node:http"
 import fs from "node:fs"
 import path from "node:path"
 import os from "node:os"
-import { spawn } from "node:child_process"
+import { execFileSync, spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.3.0"
+const VERSION = "0.3.1"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const REDIRECT_PORT = 43210
@@ -78,10 +78,68 @@ async function exchangeCode(code, codeVerifier) {
 function openBrowser(url) {
   const platform = process.platform
   try {
-    if (platform === "win32") execFileSync("cmd", ["/c", "start", url.replace(/&/g, "^&")], { stdio: "ignore" })
+    if (platform === "win32") execFileSync("explorer.exe", [url], { stdio: "ignore" })
     else if (platform === "darwin") execFileSync("open", [url], { stdio: "ignore" })
     else execFileSync("xdg-open", [url], { stdio: "ignore" })
   } catch {}
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+}
+
+function authPage({ success, title, message, detail = "" }) {
+  const color = success ? "#FF1493" : "#FF3333"
+  const closeScript = success ? "window.setTimeout(() => window.close(), 1200);" : ""
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(title)} - ONeNas Code</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh; margin: 0; display: grid; place-items: center;
+        padding: 24px; color: #f7f7fb; background: #09090d;
+        font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      main {
+        width: min(100%, 440px); padding: 38px 34px 32px; text-align: center;
+        border: 1px solid #292933; border-radius: 24px; background: #111117;
+        box-shadow: 0 24px 80px rgba(0,0,0,.45);
+      }
+      .mark {
+        width: 56px; height: 56px; margin: 0 auto 22px; display: grid; place-items: center;
+        border-radius: 16px; color: white; font-size: 21px; font-weight: 800;
+        letter-spacing: -1px; background: linear-gradient(135deg, #FF3333, #FF1493);
+      }
+      .eyebrow { margin: 0 0 7px; color: #9696a5; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: 25px; letter-spacing: -.03em; }
+      .message { margin: 12px 0 0; color: #c8c8d2; }
+      .detail { margin: 20px 0 0; color: #777786; font-size: 13px; }
+      button { margin-top: 25px; padding: 10px 18px; border: 0; border-radius: 10px; color: white; background: ${color}; font: inherit; font-weight: 700; cursor: pointer; }
+      button:hover { filter: brightness(1.1); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">ON</div>
+      <p class="eyebrow">ONeNas Code</p>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="message">${escapeHtml(message)}</p>
+      ${detail ? `<p class="detail">${escapeHtml(detail)}</p>` : ""}
+      <button type="button" onclick="window.close()">Close window</button>
+    </main>
+    <script>${closeScript}</script>
+  </body>
+</html>`
 }
 
 function login() {
@@ -104,13 +162,23 @@ function login() {
         }
         try {
           const tokens = await exchangeCode(code, verifier)
-          res.writeHead(200, { "Content-Type": "text/html" })
-          res.end("<h1>ONeNas Code</h1><p>Login successful! You can close this window.</p>")
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" })
+          res.end(authPage({
+            success: true,
+            title: "Login successful",
+            message: "Your AtlasFlux account is connected.",
+            detail: "Return to the terminal to start using ONeNas Code.",
+          }))
           server.close()
           resolve(tokens)
         } catch (err) {
-          res.writeHead(500, { "Content-Type": "text/html" })
-          res.end(`<h1>Login failed</h1><p>${err.message}</p>`)
+          res.writeHead(500, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" })
+          res.end(authPage({
+            success: false,
+            title: "Login failed",
+            message: "ONeNas Code could not complete the login.",
+            detail: err instanceof Error ? err.message : String(err),
+          }))
           server.close()
           reject(err)
         }
@@ -151,7 +219,9 @@ function managedProviderConfig(bridgeUrl, bootstrap) {
       },
     ]),
   )
+  const defaultModel = Object.keys(models)[0]
   return {
+    ...(defaultModel ? { model: `atlasflux/${defaultModel}` } : {}),
     provider: {
       atlasflux: {
         npm: "@ai-sdk/openai-compatible",

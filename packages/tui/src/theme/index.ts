@@ -127,6 +127,26 @@ export type ThemeJson = {
   }
 }
 
+function onenasTheme(primary: HexColor): ThemeJson {
+  return {
+    ...opencode,
+    theme: {
+      ...opencode.theme,
+      primary,
+      accent: primary,
+      border: primary,
+      borderActive: primary,
+      markdownHeading: primary,
+      markdownLink: primary,
+      markdownListItem: primary,
+      syntaxFunction: primary,
+    },
+  }
+}
+
+const onenasAlpha = onenasTheme("#FF3333")
+const onenasMyra = onenasTheme("#FF1493")
+
 export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   aura,
   ayu,
@@ -161,6 +181,8 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   vercel,
   zenburn,
   carbonfox,
+  "onenes alpha": onenasAlpha,
+  "onenes myra": onenasMyra,
 }
 
 const pluginThemes: Record<string, ThemeJson> = {}

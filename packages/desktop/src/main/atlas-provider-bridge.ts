@@ -136,8 +136,9 @@ export function managedProviderConfig(bridgeUrl: string, bootstrap?: AtlasBootst
       },
     ]),
   )
+  const defaultModel = Object.keys(models)[0]
   return {
-    enabled_providers: ["atlasflux"],
+    ...(defaultModel ? { model: `atlasflux/${defaultModel}` } : {}),
     provider: {
       atlasflux: {
         npm: "@ai-sdk/openai-compatible",

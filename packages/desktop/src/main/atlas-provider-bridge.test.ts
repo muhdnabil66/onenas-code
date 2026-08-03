@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { managedProviderConfig } from "./atlas-provider-bridge"
 
-test("managed provider config only exposes AtlasFlux AI models", () => {
+test("managed provider config keeps AtlasFlux as the configured default", () => {
   const config = managedProviderConfig("http://127.0.0.1:43210", {
     user: { id: "user_123" },
     plan: { id: "pro", name: "Pro" },
@@ -21,7 +21,8 @@ test("managed provider config only exposes AtlasFlux AI models", () => {
     ],
   })
 
-  expect(config.enabled_providers).toEqual(["atlasflux"])
+  expect(config.enabled_providers).toBeUndefined()
+  expect(config.model).toBe("atlasflux/openai/example")
   expect(Object.keys(config.provider)).toEqual(["atlasflux"])
   expect(config.provider.atlasflux.options.baseURL).toBe("http://127.0.0.1:43210/v1")
   expect(config.provider.atlasflux.models["openai/example"]).toMatchObject({
