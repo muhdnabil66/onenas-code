@@ -14,6 +14,13 @@ const REDIRECT_PORT = 43210
 const REDIRECT_URI = `http://127.0.0.1:${REDIRECT_PORT}/callback`
 const TOKEN_DIR = path.join(os.homedir(), ".onenas-code")
 const TOKEN_FILE = path.join(TOKEN_DIR, "auth.json")
+const LOG_FILE = path.join(TOKEN_DIR, "bridge.log")
+
+function log(msg) {
+  try {
+    fs.appendFileSync(LOG_FILE, `${new Date().toISOString()} ${msg}\n`)
+  } catch {}
+}
 
 function base64url(buf) {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
@@ -160,6 +167,7 @@ async function startBridge(getToken) {
   const { WebSocket } = await import("ws")
 
   const server = http.createServer(async (request, response) => {
+    log(`REQUEST ${request.method} ${request.url}`)
     if (request.method === "GET" && request.url === "/health") {
       response.writeHead(200, { "content-type": "application/json" })
       response.end(JSON.stringify({ ok: true }))
@@ -182,7 +190,7 @@ async function startBridge(getToken) {
       const chunks = []
       for await (const chunk of request) chunks.push(chunk)
       const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"))
-      console.log("[bridge] chat request:", payload.model, "messages:", payload.messages?.length)
+      log(`CHAT model=${payload.model} stream=${payload.stream} messages=${payload.messages?.length}`)
       if (!payload.model) {
         response.writeHead(400, { "content-type": "application/json" })
         response.end(JSON.stringify({ error: { message: "A model is required" } }))
@@ -222,13 +230,13 @@ async function startBridge(getToken) {
       })
 
       relay.addEventListener("open", () => {
-        console.log("[bridge] relay connected, authenticating...")
+        log("RELAY open, authenticating...")
         relay.send(JSON.stringify({ type: "authenticate", token: approval.relay.token }))
       })
 
       relay.addEventListener("message", (event) => {
         const message = JSON.parse(String(event.data))
-        console.log("[bridge] relay message:", message.type)
+        log(`RELAY msg: ${message.type}`)
         if (message.type === "authenticated") {
           authenticated = true
           relay.send(JSON.stringify({ type: "run.execute", runId: approval.runId, model: payload.model, payload }))
@@ -247,7 +255,7 @@ async function startBridge(getToken) {
       })
 
       relay.addEventListener("error", (err) => {
-        console.error("[bridge] relay error:", err.message || err)
+        log(`RELAY error: ${err.message || err}`)
         if (!response.headersSent) {
           response.writeHead(503, { "content-type": "application/json" })
           response.end(JSON.stringify({ error: { message: "AtlasFlux relay is unavailable" } }))
@@ -267,6 +275,7 @@ async function startBridge(getToken) {
 
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
   const port = server.address().port
+  log(`BRIDGE LISTENING http://127.0.0.1:${port}`)
   return {
     url: `http://127.0.0.1:${port}`,
     stop: () => new Promise((resolve) => server.close(resolve)),
@@ -274,7 +283,11 @@ async function startBridge(getToken) {
 }
 
 function findOpencodeBinary() {
+  const exe = process.platform === "win32" ? ".exe" : ""
   const candidates = [
+    path.join(__dirname, "resources", `opencode${exe}`),
+    path.join(__dirname, "../opencode/dist/opencode-windows-x64/bin/opencode.exe"),
+    path.join(__dirname, "../opencode/dist/opencode-windows-x64/bin/opencode"),
     path.join(__dirname, "../desktop/resources/opencode-cli.exe"),
     path.join(__dirname, "../opencode/bin/opencode"),
   ]
@@ -349,7 +362,9 @@ async function main() {
   // Default: start TUI
   const bridge = await startBridge(() => loadTokens()?.access_token ?? null)
   const bootstrap = await fetchBootstrap(tokens.access_token)
-  process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(managedProviderConfig(bridge.url, bootstrap))
+  const config = managedProviderConfig(bridge.url, bootstrap)
+  process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(config)
+  log(`CONFIG baseURL=${config.provider.atlasflux.options.baseURL} models=${Object.keys(config.provider.atlasflux.models).join(",")}`)
 
   const binary = findOpencodeBinary()
   if (!binary) {

@@ -4,16 +4,24 @@
   "description": "ONeNas Code by AtlasFlux - AI coding agent CLI",
   "type": "module",
   "bin": {
-    "onenas": "./bin/onenas"
+    "onenas": "./onenas.mjs"
   },
+  "files": [
+    "onenas.mjs",
+    "scripts/postinstall.mjs"
+  ],
   "scripts": {
+    "postinstall": "node ./scripts/postinstall.mjs",
     "dev": "node --import tsx src/index.ts",
     "build": "node scripts/build.mjs",
     "start": "node dist/index.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "open": "^10.1.0",
-    "ws": "^8.18.0"
+    "ws": "8.21.1"
   },
   "devDependencies": {
     "tsx": "^4.19.0"
