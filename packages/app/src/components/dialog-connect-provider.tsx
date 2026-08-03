@@ -29,6 +29,7 @@ import {
 } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { useParams } from "@solidjs/router"
+import { ExternalLink } from "@/components/external-link"
 import { useServerSDK } from "@/context/server-sdk"
 import { useServerSync } from "@/context/server-sync"
 import { useLanguage } from "@/context/language"
