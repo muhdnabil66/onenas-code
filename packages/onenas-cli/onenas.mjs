@@ -8,7 +8,7 @@ import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.2.1"
+const VERSION = "0.2.2"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const REDIRECT_PORT = 43210
@@ -152,7 +152,6 @@ function managedProviderConfig(bridgeUrl, bootstrap) {
     ]),
   )
   return {
-    enabled_providers: ["atlasflux"],
     provider: {
       atlasflux: {
         npm: "@ai-sdk/openai-compatible",
