@@ -1,6 +1,6 @@
-# OpenCode Session Runtime
+# ONeNas Code Session Runtime
 
-OpenCode sessions preserve durable conversational history while assembling the runtime context an agent needs to act correctly in its current environment.
+ONeNas Code sessions preserve durable conversational history while assembling the runtime context an agent needs to act correctly in its current environment.
 
 ## Language
 
@@ -55,7 +55,7 @@ One process-local execution span that promotes eligible input and runs required 
 The bounded projection of a Core-executed tool result persisted in Session history and replayed to the model. A tool may shape this projection semantically, but the Tool Registry enforces the final size limit.
 
 **Managed Tool Output File**:
-A temporary file created under OpenCode's shared tool-output directory to retain complete output that was too large for Session history.
+A temporary file created under ONeNas Code's shared tool-output directory to retain complete output that was too large for Session history.
 
 **Model Request Options**:
 Provider-semantic model settings selected from the Catalog and active Session variant before the LLM protocol adapter encodes them for a provider request.
@@ -70,15 +70,15 @@ Opaque protocol-shaped data attached to assistant content and required to contin
 **PTY Environment**:
 The host-supplied environment overlay applied by the server when creating a PTY, observed for the request Location and resolved PTY working directory.
 
-**OpenCode Client**:
+**ONeNas Client**:
 The generated Promise and Effect APIs derived from the public `HttpApi`; **Embedded OpenCode** shares the Effect API through an in-memory `HttpClient` against the same router and handlers.
 _Avoid_: Remote client
 
 **SDK Contract IR**:
 The runtime-neutral compiled representation of the authoritative `HttpApi`, preserving encoded and decoded type projections plus transport metadata so independent SDK emitters can choose their public value model and runtime interpreter.
 
-**Embedded OpenCode**:
-A scoped in-process host that structurally extends the **OpenCode Client**, supplies an in-memory HTTP transport, and exposes additional same-process capabilities directly.
+**Embedded ONeNas Code**:
+A scoped in-process host that structurally extends the **ONeNas Client**, supplies an in-memory HTTP transport, and exposes additional same-process capabilities directly.
 _Avoid_: Local implementation
 
 **Page**:
@@ -140,8 +140,8 @@ _Avoid_: Response envelope
 - The Effect-native network constructor obtains `HttpClient.HttpClient` from its environment so callers own transport selection, recording, tracing, retries, and tests. Convenience runtimes may provide a fetch transport separately.
 - Creating **Embedded OpenCode** is scoped. Closing its owning Scope releases the in-process server resources, database resources, registrations, and fibers.
 - **Embedded OpenCode** exposes shared client capabilities and embedded-only capabilities on one object; consumers do not navigate through a nested `.client` property.
-- The beta **OpenCode Client** currently uses plural consumer-facing capability groups such as `sessions`; whether the stable Session namespace should instead be singular `session` must be settled before stabilization. Internal server identifiers do not implicitly define public client names.
-- Server's concrete `HttpApi` is authoritative for shared **OpenCode Client** capabilities. Codegen compiles its Session group directly; the Effect runtime uses an equivalent Protocol-only projection so generated artifacts remain independent of Core and Server.
+- The beta **ONeNas Client** currently uses plural consumer-facing capability groups such as `sessions`; whether the stable Session namespace should instead be singular `session` must be settled before stabilization. Internal server identifiers do not implicitly define public client names.
+- Server's concrete `HttpApi` is authoritative for shared **ONeNas Client** capabilities. Codegen compiles its Session group directly; the Effect runtime uses an equivalent Protocol-only projection so generated artifacts remain independent of Core and Server.
 - SDK generation reflects the public `HttpApi` once into an **SDK Contract IR**. Promise and Effect emitters share endpoint structure and transport metadata without being required to expose identical public values: an emitter may select encoded wire types, decoded domain types, compile-time brands, runtime validation, and its own execution abstraction independently.
 - The first Effect emitter is the rich projection: it exposes decoded Effect-native values, preserves brands and schema transformations, performs runtime schema decoding, and delegates transport interpretation to `HttpApiClient`. Lighter wire-shaped Effect output remains possible through another emitter policy rather than constraining the shared IR.
 - The rich Effect emitter regenerates private executable schemas when the **SDK Contract IR** proves that their transport semantics can be reproduced exactly. Contracts with authoritative custom transformations use the import-based Effect emitter against a Protocol-only client projection whose generated transport output is tested against Server's concrete API; the Promise emitter still derives zero-Effect structural wire types from the same IR.
