@@ -1,32 +1,52 @@
 {
   "$schema": "https://v2-8-13.turborepo.dev/schema.json",
-  "globalEnv": ["CI", "ONENAS_DISABLE_SHARE"],
-  "globalPassThroughEnv": ["CI", "ONENAS_DISABLE_SHARE"],
+  "globalEnv": [
+    "CI",
+    "ONENAS_DISABLE_SHARE"
+  ],
+  "globalPassThroughEnv": [
+    "CI",
+    "ONENAS_DISABLE_SHARE"
+  ],
   "tasks": {
     "typecheck": {},
     "build": {
       "dependsOn": [],
-      "outputs": ["dist/**"]
+      "outputs": [
+        "dist/**"
+      ]
     },
     "onenas#test": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": [],
-      "passThroughEnv": ["*"]
+      "passThroughEnv": [
+        "*"
+      ]
     },
-    "@opencode-ai/core#test": {
-      "dependsOn": ["^build"],
+    "@onenas-code/core#test": {
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
-    "@opencode-ai/app#test": {
-      "dependsOn": ["^build"],
+    "@onenas-code/app#test": {
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
-    "@opencode-ai/ui#test": {
-      "dependsOn": ["^build"],
+    "@onenas-code/ui#test": {
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
-    "@opencode-ai/session-ui#test": {
-      "dependsOn": ["^build"],
+    "@onenas-code/session-ui#test": {
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     }
   }
