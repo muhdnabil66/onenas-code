@@ -1,6 +1,6 @@
 {
   "name": "onenas-code",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "ONeNas Code by AtlasFlux - local coding agent desktop client",
   "main": "./onenas.mjs",
   "bin": {
