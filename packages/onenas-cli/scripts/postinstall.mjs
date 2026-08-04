@@ -13,7 +13,7 @@ const ARCH = process.arch === "arm64" ? "arm64" : "x64"
 const EXE = process.platform === "win32" ? ".exe" : ""
 const ASSET = `onenas-code-${OS}-${ARCH}${EXE}`
 const DEST_DIR = path.join(pkgRoot, "resources")
-const DEST = path.join(DEST_DIR, `opencode${EXE}`)
+const DEST = path.join(DEST_DIR, `onenas${EXE}`)
 
 const CI = process.env.CI === "true" || process.env.CI === "1"
 
