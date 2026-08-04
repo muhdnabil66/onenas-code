@@ -18,8 +18,5 @@
   "bugs": {},
   "homepage": "",
   "packageManager": "bun@1.3.14",
-  "scripts": {
-    "typecheck": "bun turbo typecheck",
-    "build": "bun turbo build"
-  }
+  "scripts": {}
 }
