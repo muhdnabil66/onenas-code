@@ -49,5 +49,19 @@
       ],
       "outputs": []
     }
+  },
+  "globalDependencies": [
+    "*"
+  ],
+  "pipeline": {
+    "*": {
+      "dependsOn": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "passThroughEnv": [
+        "*"
+      ]
+    }
   }
 }
