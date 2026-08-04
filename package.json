@@ -4,10 +4,11 @@
   "description": "ONeNas Code by AtlasFlux - local coding agent desktop client",
   "main": "./onenas.mjs",
   "bin": {
-    "onenas": "./onenas.mjs"
+    "onenas": "./onenas.js"
   },
   "files": [
-    "onenas.mjs",
+    "onenas.js",
+    "onenas.cmd",
     "scripts/postinstall.mjs",
     "README.md",
     "LICENSE"
