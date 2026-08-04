@@ -51,6 +51,7 @@ export function SubagentFooter() {
     return {
       context: pct ? `${Locale.number(tokens)} (${pct})` : Locale.number(tokens),
       cost: cost > 0 ? money.format(cost) : undefined,
+      credits: cost > 0 ? `${Math.ceil(cost * 4.3 * 100 * 1.2).toLocaleString()} credits` : undefined,
     }
   })
 
@@ -88,7 +89,7 @@ export function SubagentFooter() {
             <Show when={usage()}>
               {(item) => (
                 <text fg={theme.textMuted} wrapMode="none">
-                  {[item().context, item().cost].filter(Boolean).join(" · ")}
+                  {[item().context, item().cost, item().credits].filter(Boolean).join(" · ")}
                 </text>
               )}
             </Show>

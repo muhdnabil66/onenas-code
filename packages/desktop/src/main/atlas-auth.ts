@@ -21,6 +21,11 @@ export type AtlasModel = {
   maxOutputTokens?: number
   supportsReasoning?: boolean
   supportsTools?: boolean
+  free?: boolean
+  pricing?: {
+    inputPerMillionUsd?: number
+    outputPerMillionUsd?: number
+  }
 }
 
 export type AtlasBootstrap = {

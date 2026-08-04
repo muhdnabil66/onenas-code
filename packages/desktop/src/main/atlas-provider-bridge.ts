@@ -133,6 +133,16 @@ export function managedProviderConfig(bridgeUrl: string, bootstrap?: AtlasBootst
                 output: model.maxOutputTokens,
               }
             : undefined,
+        cost: model.pricing
+          ? {
+              input: model.pricing.inputPerMillionUsd ?? 0,
+              output: model.pricing.outputPerMillionUsd ?? 0,
+              cache: {
+                read: model.pricing.inputPerMillionUsd ?? 0,
+                write: model.pricing.inputPerMillionUsd ?? 0,
+              },
+            }
+          : undefined,
       },
     ]),
   )

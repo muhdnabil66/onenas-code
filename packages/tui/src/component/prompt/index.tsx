@@ -277,6 +277,7 @@ export function Prompt(props: PromptProps) {
     return {
       context: pct ? `${Locale.number(tokens)} (${pct})` : Locale.number(tokens),
       cost: cost > 0 ? money.format(cost) : undefined,
+      credits: cost > 0 ? `${Math.ceil(cost * 4.3 * 100 * 1.2).toLocaleString()} credits` : undefined,
     }
   })
 
@@ -1659,13 +1660,13 @@ export function Prompt(props: PromptProps) {
               <Switch>
                 <Match when={store.mode === "normal"}>
                   <Switch>
-                    <Match when={usage()}>
-                      {(item) => (
-                        <text fg={theme.textMuted} wrapMode="none">
-                          {[item().context, item().cost].filter(Boolean).join(" · ")}
-                        </text>
-                      )}
-                    </Match>
+                <Match when={usage()}>
+                  {(item) => (
+                    <text fg={theme.textMuted} wrapMode="none">
+                      {[item().context, item().cost, item().credits].filter(Boolean).join(" · ")}
+                    </text>
+                  )}
+                </Match>
                     <Match when={true}>
                       <text fg={theme.text}>
                         {agentShortcut()} <span style={{ fg: theme.textMuted }}>agents</span>

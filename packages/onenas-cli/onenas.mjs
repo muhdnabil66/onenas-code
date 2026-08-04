@@ -8,7 +8,7 @@ import { execFileSync, spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.3.4"
+const VERSION = "0.3.5"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const BASE_REDIRECT_PORT = 43210
@@ -159,6 +159,16 @@ function managedProviderConfig(bridgeUrl, bootstrap) {
         reasoning: model.supportsReasoning === true,
         limit: model.contextWindow || model.maxOutputTokens
           ? { context: model.contextWindow, output: model.maxOutputTokens }
+          : undefined,
+        cost: model.pricing
+          ? {
+              input: model.pricing.inputPerMillionUsd ?? 0,
+              output: model.pricing.outputPerMillionUsd ?? 0,
+              cache: {
+                read: model.pricing.inputPerMillionUsd ?? 0,
+                write: model.pricing.inputPerMillionUsd ?? 0,
+              },
+            }
           : undefined,
       },
     ]),
