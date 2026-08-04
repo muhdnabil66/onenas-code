@@ -457,7 +457,7 @@ async function main() {
   const bridge = await startBridge()
   const bootstrap = await fetchBootstrap(tokens.access_token)
   const config = managedProviderConfig(bridge.url, bootstrap)
-  process.env.ONENAS_CONFIG_CONTENT = JSON.stringify(config)
+  process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(config)
   log(`CONFIG baseURL=${config.provider.atlasflux.options.baseURL} models=${Object.keys(config.provider.atlasflux.models).join(",")}`)
 
   const binary = findOnenasBinary()
