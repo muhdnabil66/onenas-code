@@ -9,51 +9,6 @@
     "ONENAS_DISABLE_SHARE"
   ],
   "tasks": {
-    "typecheck": {},
-    "build": {
-      "dependsOn": [],
-      "outputs": [
-        "dist/**"
-      ]
-    },
-    "onenas#test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [],
-      "passThroughEnv": [
-        "*"
-      ]
-    },
-    "@onenas-code/core#test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": []
-    },
-    "@onenas-code/app#test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": []
-    },
-    "@onenas-code/ui#test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": []
-    },
-    "@onenas-code/session-ui#test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": []
-    }
-  },
-  "globalDependencies": [
-    "*"
-  ],
-  "pipeline": {
     "*": {
       "dependsOn": [],
       "outputs": [
@@ -63,5 +18,8 @@
         "*"
       ]
     }
-  }
+  },
+  "globalDependencies": [
+    "*"
+  ]
 }
