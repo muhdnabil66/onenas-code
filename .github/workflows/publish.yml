@@ -37,34 +37,48 @@ jobs:
           OPENCODE_VERSION: ${{ github.ref_name }}
           OPENCODE_RELEASE: true
 
-      - name: Rename binaries to onenas
+      - name: Prepare binaries with correct naming
         run: |
           cd packages/opencode/dist
+          
+          # Rename all binaries to onenas
           for f in $(find . -name "opencode" -type f -executable); do
             dir=$(dirname "$f")
-            name=$(basename "$f")
             mv "$f" "$dir/onenas"
           done
           for f in $(find . -name "opencode.exe" -type f); do
             dir=$(dirname "$f")
-            name=$(basename "$f")
             mv "$f" "$dir/onenas.exe"
           done
+          
+          # Create release assets with correct naming
+          mkdir -p release-assets
+          
+          # Windows x64
+          cp opencode-windows-x64/bin/onenas.exe release-assets/onenas-code-windows-x64.exe
+          
+          # Linux x64
+          cp opencode-linux-x64/bin/onenas release-assets/onenas-code-linux-x64
+          chmod +x release-assets/onenas-code-linux-x64
+          
+          # macOS darwin arm64
+          cp opencode-darwin-arm64/bin/onenas release-assets/onenas-code-darwin-arm64
+          chmod +x release-assets/onenas-code-darwin-arm64
+          
+          # macOS darwin x64
+          cp opencode-darwin-x64/bin/onenas release-assets/onenas-code-darwin-x64
+          chmod +x release-assets/onenas-code-darwin-x64
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: onenas-binary
-          path: |
-            packages/opencode/dist/opencode-windows-x64/bin/onenas.exe
-            packages/opencode/dist/opencode-linux-x64/bin/onenas
-            packages/opencode/dist/opencode-darwin-arm64/bin/onenas
-            packages/opencode/dist/opencode-darwin-x64/bin/onenas
+          path: release-assets/*
 
       - name: Verify binary
         run: |
-          if [ -f packages/opencode/dist/opencode-windows-x64/bin/onenas.exe ]; then
-            file packages/opencode/dist/opencode-windows-x64/bin/onenas.exe
+          if [ -f release-assets/onenas-code-windows-x64.exe ]; then
+            file release-assets/onenas-code-windows-x64.exe
           fi
 
   release:
@@ -77,14 +91,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: onenas-binary
-          path: packages/opencode/dist
+          path: release-assets
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          files: packages/opencode/dist/**/*.{exe,zip,tar.gz}
+          files: release-assets/*
           draft: false
           prerelease: false
           body: |
