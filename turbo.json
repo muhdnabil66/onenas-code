@@ -9,6 +9,7 @@
     "ONENAS_DISABLE_SHARE"
   ],
   "tasks": {
+    "typecheck": {},
     "*": {
       "dependsOn": [],
       "outputs": [
