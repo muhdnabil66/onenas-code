@@ -16,6 +16,10 @@
     "build": "node scripts/build.mjs",
     "start": "node dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhdnabil66/onenas-code.git"
+  },
   "engines": {
     "node": ">=20"
   },
