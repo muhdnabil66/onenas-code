@@ -8,7 +8,7 @@ import { execFileSync, spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.3.7"
+const VERSION = "0.4.3"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const BASE_REDIRECT_PORT = 43210
