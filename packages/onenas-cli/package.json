@@ -19,6 +19,10 @@
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhdnabil66/onenas-code.git"
+  },
   "dependencies": {
     "open": "^10.1.0",
     "ws": "8.21.1"
