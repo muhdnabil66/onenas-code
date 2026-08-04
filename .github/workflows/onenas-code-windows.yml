@@ -51,11 +51,11 @@ jobs:
         working-directory: packages/desktop
         run: bun test electron-builder.config.test.ts src/main/atlas-provider-bridge.test.ts
 
-      - name: Package signed Windows x64 installer
-        working-directory: packages/desktop
-        run: bun run package:win --x64 --publish never
-        env:
-          OPENCODE_CHANNEL: prod
+- name: Package signed Windows x64 installer
+      working-directory: packages/desktop
+      run: bun run package:win --x64 --publish never
+      env:
+          ONENAS_CHANNEL: prod
           ONENAS_AUTO_UPDATE: "0"
           AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
           AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
