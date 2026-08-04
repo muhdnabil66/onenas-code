@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { login, loadTokens, clearTokens, fetchBootstrap, type AuthTokens } from "./auth.js"
+import { login, clearTokens, fetchBootstrap, getValidTokens, type AuthTokens } from "./auth.js"
 import { startProviderBridge, managedProviderConfig } from "./bridge.js"
 import { execFileSync } from "node:child_process"
 import path from "node:path"
@@ -74,7 +74,7 @@ async function findOpencodeBinary(): Promise<string | null> {
 
 async function runTUI(tokens: AuthTokens) {
   // Start provider bridge
-  const bridge = await startProviderBridge(() => loadTokens()?.access_token ?? null)
+  const bridge = await startProviderBridge(async () => await getValidTokens())
   
   // Fetch bootstrap for model config
   let bootstrap
@@ -138,7 +138,7 @@ async function main() {
   }
 
   // Commands that need auth
-  let tokens = loadTokens()
+  let tokens = await getValidTokens()
   if (!tokens) {
     console.log(`\n  Not signed in. Opening AtlasFlux login...\n`)
     tokens = await login()

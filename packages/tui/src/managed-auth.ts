@@ -81,6 +81,7 @@ export async function login() {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
+                grant_type: "authorization_code",
                 code,
                 code_verifier: verifier,
                 redirect_uri: redirectUri,

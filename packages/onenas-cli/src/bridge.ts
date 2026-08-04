@@ -61,15 +61,16 @@ async function body(request: http.IncomingMessage, limit = 4_000_000): Promise<s
   })
 }
 
-export async function startProviderBridge(getToken: () => string | null): Promise<{ url: string; stop: () => Promise<void> }> {
+export async function startProviderBridge(getTokens: () => Promise<{ access_token: string } | null>): Promise<{ url: string; stop: () => Promise<void> }> {
   const server = http.createServer(async (request, response) => {
     if (request.method === "GET" && request.url === "/health") return json(response, 200, { ok: true })
     if (request.method !== "POST" || request.url !== "/v1/chat/completions") {
       return json(response, 404, { error: { message: "Not found" } })
     }
 
-    const token = getToken()
-    if (!token) return json(response, 401, { error: { message: "Not authenticated. Run 'onenas login' first." } })
+    const tokens = await getTokens()
+    if (!tokens) return json(response, 401, { error: { message: "Not authenticated. Run 'onenas login' first." } })
+    const accessToken = tokens.access_token
 
     try {
       const payload = JSON.parse(await body(request)) as ProviderPayload
@@ -80,7 +81,7 @@ export async function startProviderBridge(getToken: () => string | null): Promis
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
           "idempotency-key": idempotencyKey,
         },
         body: JSON.stringify({ model: payload.model, idempotencyKey }),

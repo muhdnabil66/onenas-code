@@ -8,7 +8,7 @@ import { execFileSync, spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const VERSION = "0.3.5"
+const VERSION = "0.3.6"
 const PARENT_ORIGIN = process.env.ONENAS_PARENT_ORIGIN || "https://ai.atlasflux.my"
 const CLIENT_ID = "onenas-code"
 const BASE_REDIRECT_PORT = 43210
@@ -46,9 +46,40 @@ function loadTokens() {
   } catch { return null }
 }
 
+function loadTokensRaw() {
+  try { return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8")) } catch { return null }
+}
+
 function saveTokens(tokens) {
   fs.mkdirSync(TOKEN_DIR, { recursive: true })
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2))
+}
+
+async function refreshTokens(saved) {
+  if (!saved?.refresh_token) return null
+  const res = await fetch(`${PARENT_ORIGIN}/api/desktop/onenas-code/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ grant_type: "refresh_token", refresh_token: saved.refresh_token, client_id: CLIENT_ID }),
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  if (!data.access_token) return null
+  const next = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || saved.refresh_token,
+    expires_at: Date.now() + (data.expires_in || 900) * 1000,
+  }
+  saveTokens(next)
+  return next
+}
+
+async function getValidTokens() {
+  const current = loadTokens()
+  if (current) return current
+  const saved = loadTokensRaw()
+  if (!saved?.access_token) return null
+  try { return await refreshTokens(saved) } catch { return null }
 }
 
 function clearTokens() {
@@ -187,7 +218,7 @@ function managedProviderConfig(bridgeUrl, bootstrap) {
   }
 }
 
-async function startBridge(getToken) {
+async function startBridge() {
   const { WebSocket } = await import("ws")
 
   const server = http.createServer(async (request, response) => {
@@ -203,12 +234,13 @@ async function startBridge(getToken) {
       return
     }
 
-    const token = getToken()
+    const token = await getValidTokens()
     if (!token) {
       response.writeHead(401, { "content-type": "application/json" })
-      response.end(JSON.stringify({ error: { message: "Not authenticated" } }))
+      response.end(JSON.stringify({ error: { message: "Not authenticated. Run 'onenas login' first." } }))
       return
     }
+    const accessToken = token.access_token
 
     try {
       const chunks = []
@@ -224,7 +256,7 @@ async function startBridge(getToken) {
       const idempotencyKey = crypto.randomUUID()
       const approvalRes = await fetch(`${PARENT_ORIGIN}/api/desktop/onenas-code/run`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "idempotency-key": idempotencyKey },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, "idempotency-key": idempotencyKey },
         body: JSON.stringify({ model: payload.model, idempotencyKey }),
       })
       if (!approvalRes.ok) {
@@ -385,7 +417,7 @@ async function main() {
     return
   }
 
-  let tokens = loadTokens()
+  let tokens = await getValidTokens()
   if (!tokens) {
     console.log("\n  Not signed in. Opening AtlasFlux login...\n")
     tokens = await login()
@@ -422,7 +454,7 @@ async function main() {
   }
 
   // Default: start TUI
-  const bridge = await startBridge(() => loadTokens()?.access_token ?? null)
+  const bridge = await startBridge()
   const bootstrap = await fetchBootstrap(tokens.access_token)
   const config = managedProviderConfig(bridge.url, bootstrap)
   process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(config)

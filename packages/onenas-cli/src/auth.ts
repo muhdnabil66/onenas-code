@@ -57,9 +57,52 @@ export function loadTokens(): AuthTokens | null {
   }
 }
 
+function loadTokensRaw(): AuthTokens | null {
+  try {
+    return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8")) as AuthTokens
+  } catch {
+    return null
+  }
+}
+
 export function saveTokens(tokens: AuthTokens) {
   fs.mkdirSync(TOKEN_DIR, { recursive: true })
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2))
+}
+
+export async function refreshTokens(saved: AuthTokens): Promise<AuthTokens | null> {
+  if (!saved?.refresh_token) return null
+  const res = await fetch(`${PARENT_ORIGIN}/api/desktop/onenas-code/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      refresh_token: saved.refresh_token,
+      client_id: CLIENT_ID,
+    }),
+  })
+  if (!res.ok) return null
+  const data = (await res.json()) as { access_token: string; refresh_token?: string; expires_in?: number }
+  if (!data.access_token) return null
+  const next: AuthTokens = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || saved.refresh_token,
+    expires_at: Date.now() + (data.expires_in || 900) * 1000,
+  }
+  saveTokens(next)
+  return next
+}
+
+export async function getValidTokens(): Promise<AuthTokens | null> {
+  const current = loadTokens()
+  if (current) return current
+  const saved = loadTokensRaw()
+  if (!saved?.access_token) return null
+  try {
+    return await refreshTokens(saved)
+  } catch {
+    return null
+  }
 }
 
 export function clearTokens() {
