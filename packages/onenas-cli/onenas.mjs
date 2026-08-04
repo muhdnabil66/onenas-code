@@ -338,21 +338,21 @@ async function startBridge() {
   }
 }
 
-function findOnenasBinary() {
+function findOpencodeBinary() {
   const exe = process.platform === "win32" ? ".exe" : ""
   const candidates = [
-    path.join(__dirname, "resources", `onenas${exe}`),
-    path.join(__dirname, "../onenas-code/dist/onenas-windows-x64/bin/onenas.exe"),
-    path.join(__dirname, "../onenas-code/dist/onenas-windows-x64/bin/onenas"),
-    path.join(__dirname, "../desktop/resources/onenas-cli.exe"),
-    path.join(__dirname, "../onenas-code/bin/onenas"),
+    path.join(__dirname, "resources", `opencode${exe}`),
+    path.join(__dirname, "../opencode/dist/opencode-windows-x64/bin/opencode.exe"),
+    path.join(__dirname, "../opencode/dist/opencode-windows-x64/bin/opencode"),
+    path.join(__dirname, "../desktop/resources/opencode-cli.exe"),
+    path.join(__dirname, "../opencode/bin/opencode"),
   ]
   for (const c of candidates) {
     try { if (fs.existsSync(c)) return c } catch {}
   }
   try {
     const cmd = process.platform === "win32" ? "where" : "which"
-    return execFileSync(cmd, ["onenas"], { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim().split("\n")[0]
+    return execFileSync(cmd, ["opencode"], { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim().split("\n")[0]
   } catch { return null }
 }
 
@@ -457,12 +457,12 @@ async function main() {
   const bridge = await startBridge()
   const bootstrap = await fetchBootstrap(tokens.access_token)
   const config = managedProviderConfig(bridge.url, bootstrap)
-  process.env.ONENAS_CONFIG_CONTENT = JSON.stringify(config)
+  process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify(config)
   log(`CONFIG baseURL=${config.provider.atlasflux.options.baseURL} models=${Object.keys(config.provider.atlasflux.models).join(",")}`)
 
-  const binary = findOnenasBinary()
+  const binary = findOpencodeBinary()
   if (!binary) {
-    console.error("\n  ONeNas Code binary not found. Run from onenas-code repo root.\n")
+    console.error("\n  OpenCode binary not found. Run from onenas-code repo root.\n")
     await bridge.stop()
     process.exit(1)
   }
